@@ -1,0 +1,1451 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Cleveland Food System Map</name>
+    <description><![CDATA[The goal of this map is to connect and create a stronger sense of community. Knowing is a part of the battle.<br><br>If there are any active or in-progress community gardens, farms, or markets that you would like to add, please submit them here: https://forms.gle/kQLemt4iT8gA5vmWA<br><br>If you are interested in volunteering, please fill out this form out for you or your organization: https://forms.gle/HEtXND9L3uKUJ5jZ7<br><br>Link to Cleveland Farmers’ Markets, Farm Stands, & Fresh Stops: https://www.notion.so/2068944e923b8028a176d0f7ea9d2b33?v=2068944e923b804e91b3000cde0988f2<br><br>CDPH One Stop Shop for Anything Food Systems Related:<br>https://www.clevelandohio.gov/city-hall/departments/public-health/programs-services/food-systems<br><br>If you are interested in getting involved, have resources to share, or have funding opportunities, please reach out to <br>Ridwan Lawal, Food Systems Coordinator with FARE <br>ridwan@thefareproject.org<br>(216)352-3706<br><br>For more information on all things Cleveland Agriculture, please reach out to<br>Zainab Pixler, Local Food Systems Strategies Coordinator<br>ZPixler@ClevelandOhio.gov<br>(216) 664-6175<br><br>**This map is in constant edit. Check regularly, as information might change.**]]></description>
+    <Style id="icon-1566-A52714-normal">
+      <IconStyle>
+        <color>ff1427a5</color>
+        <scale>1</scale>
+        <Icon>
+          <href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
+        </Icon>
+      </IconStyle>
+      <LabelStyle>
+        <scale>0</scale>
+      </LabelStyle>
+    </Style>
+    <Style id="icon-1566-A52714-highlight">
+      <IconStyle>
+        <color>ff1427a5</color>
+        <scale>1</scale>
+        <Icon>
+          <href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
+        </Icon>
+      </IconStyle>
+      <LabelStyle>
+        <scale>1</scale>
+      </LabelStyle>
+    </Style>
+    <StyleMap id="icon-1566-A52714">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#icon-1566-A52714-normal</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#icon-1566-A52714-highlight</styleUrl>
+      </Pair>
+    </StyleMap>
+    <Style id="icon-1566-A52714-labelson">
+      <IconStyle>
+        <color>ff1427a5</color>
+        <scale>1</scale>
+        <Icon>
+          <href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="icon-1566-A52714-nodesc-normal">
+      <IconStyle>
+        <color>ff1427a5</color>
+        <scale>1</scale>
+        <Icon>
+          <href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
+        </Icon>
+      </IconStyle>
+      <LabelStyle>
+        <scale>0</scale>
+      </LabelStyle>
+      <BalloonStyle>
+        <text><![CDATA[<h3>$[name]</h3>]]></text>
+      </BalloonStyle>
+    </Style>
+    <Style id="icon-1566-A52714-nodesc-highlight">
+      <IconStyle>
+        <color>ff1427a5</color>
+        <scale>1</scale>
+        <Icon>
+          <href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
+        </Icon>
+      </IconStyle>
+      <LabelStyle>
+        <scale>1</scale>
+      </LabelStyle>
+      <BalloonStyle>
+        <text><![CDATA[<h3>$[name]</h3>]]></text>
+      </BalloonStyle>
+    </Style>
+    <StyleMap id="icon-1566-A52714-nodesc">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#icon-1566-A52714-nodesc-normal</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#icon-1566-A52714-nodesc-highlight</styleUrl>
+      </Pair>
+    </StyleMap>
+    <Style id="icon-1578-9C27B0-normal">
+      <IconStyle>
+        <color>ffb0279c</color>
+        <scale>1</scale>
+        <Icon>
+          <href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
+        </Icon>
+      </IconStyle>
+      <LabelStyle>
+        <scale>0</scale>
+      </LabelStyle>
+    </Style>
+    <Style id="icon-1578-9C27B0-highlight">
+      <IconStyle>
+        <color>ffb0279c</color>
+        <scale>1</scale>
+        <Icon>
+          <href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
+        </Icon>
+      </IconStyle>
+      <LabelStyle>
+        <scale>1</scale>
+      </LabelStyle>
+    </Style>
+    <StyleMap id="icon-1578-9C27B0">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#icon-1578-9C27B0-normal</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#icon-1578-9C27B0-highlight</styleUrl>
+      </Pair>
+    </StyleMap>
+    <Style id="icon-1582-0F9D58-normal">
+      <IconStyle>
+        <color>ff589d0f</color>
+        <scale>1</scale>
+        <Icon>
+          <href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
+        </Icon>
+      </IconStyle>
+      <LabelStyle>
+        <scale>0</scale>
+      </LabelStyle>
+    </Style>
+    <Style id="icon-1582-0F9D58-highlight">
+      <IconStyle>
+        <color>ff589d0f</color>
+        <scale>1</scale>
+        <Icon>
+          <href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
+        </Icon>
+      </IconStyle>
+      <LabelStyle>
+        <scale>1</scale>
+      </LabelStyle>
+    </Style>
+    <StyleMap id="icon-1582-0F9D58">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#icon-1582-0F9D58-normal</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#icon-1582-0F9D58-highlight</styleUrl>
+      </Pair>
+    </StyleMap>
+    <Style id="icon-1582-0F9D58-labelson">
+      <IconStyle>
+        <color>ff589d0f</color>
+        <scale>1</scale>
+        <Icon>
+          <href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="icon-1582-0F9D58-nodesc-normal">
+      <IconStyle>
+        <color>ff589d0f</color>
+        <scale>1</scale>
+        <Icon>
+          <href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
+        </Icon>
+      </IconStyle>
+      <LabelStyle>
+        <scale>0</scale>
+      </LabelStyle>
+      <BalloonStyle>
+        <text><![CDATA[<h3>$[name]</h3>]]></text>
+      </BalloonStyle>
+    </Style>
+    <Style id="icon-1582-0F9D58-nodesc-highlight">
+      <IconStyle>
+        <color>ff589d0f</color>
+        <scale>1</scale>
+        <Icon>
+          <href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
+        </Icon>
+      </IconStyle>
+      <LabelStyle>
+        <scale>1</scale>
+      </LabelStyle>
+      <BalloonStyle>
+        <text><![CDATA[<h3>$[name]</h3>]]></text>
+      </BalloonStyle>
+    </Style>
+    <StyleMap id="icon-1582-0F9D58-nodesc">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#icon-1582-0F9D58-nodesc-normal</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#icon-1582-0F9D58-nodesc-highlight</styleUrl>
+      </Pair>
+    </StyleMap>
+    <Folder>
+      <name>Ward 1, 2, and 3 Gardens and Farms</name>
+      <Placemark>
+        <name>E 177th Street Garden</name>
+        <description><![CDATA[Garden Manager : Patricia Douglas <br>Email: pyd1219@msn.com <br>Phone: (216) 536-9473]]></description>
+        <styleUrl>#icon-1582-0F9D58-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            -81.5554998,41.4507204,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>A.J. Rickoff Garden</name>
+        <description><![CDATA[Garden Manager: Tracy Bellum<br>Phone: (216) 926-4095<br>Email: tracy.bellum@clevelandmetroschools.org]]></description>
+        <styleUrl>#icon-1582-0F9D58-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            -81.5793387,41.4629998,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Ashbury Sprouts</name>
+        <description><![CDATA[Garden Manager: Sandra Robertson<br>Phone: (216) 224-4638<br>Email: runvus911@gmail.com ]]></description>
+        <styleUrl>#icon-1582-0F9D58-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            -81.5987741,41.4742534,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Canaan Garden</name>
+        <description><![CDATA[Garden Manager: Janet Nevels <br>Email: jan_nevels@yahoo.com <br>Phone: (216) 408-6478]]></description>
+        <styleUrl>#icon-1582-0F9D58-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            -81.568534,41.4316197,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Garden 9914</name>
+        <description><![CDATA[Garden Manager: Karen Troy<br>Phone: (216) 435-1289<br>Email: farmandgarden9914@gmail.com]]></description>
+        <styleUrl>#icon-1582-0F9D58-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6159323,41.4797582,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name><![CDATA[God's Little Acre]]></name>
+        <description><![CDATA[Garden Manager: Donna Sutton<br>Private Senior Resident Garden]]></description>
+        <styleUrl>#icon-1582-0F9D58-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            -81.5631106,41.4309109,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Elizabeth Hyacinth Community Garden</name>
+        <description><![CDATA[Garden Manager: Latoya Ellington<br>Phone: (216) 310-4479<br>Email: lsellington@sbcglobal.net ]]></description>
+        <styleUrl>#icon-1582-0F9D58-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6479003,41.4787163,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Harvard Square</name>
+        <description><![CDATA[Garden Manager: Lester DeVese<br>Phone: 216-438-0893.<br>Email: theharvardsquarecenter@gmail.com<br>"Help is here to stay."]]></description>
+        <styleUrl>#icon-1582-0F9D58-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            -81.5873026,41.4489664,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Jannifer Garden</name>
+        <description><![CDATA[Garden Manager: Jannifer Stevenson<br>Email: jannifer.taylor41@gmail.com <br>Phone: (216) 512-4669]]></description>
+        <styleUrl>#icon-1582-0F9D58-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            -81.607981,41.4445301,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name><![CDATA[Johnson's Community Garden]]></name>
+        <description><![CDATA[Garden Manager: Robert Johnson<br>Phone: (216) 322-5003 <br>Email: flavaomens@gmail.com ]]></description>
+        <styleUrl>#icon-1582-0F9D58-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6122825,41.456551,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>P.H.D.</name>
+        <description><![CDATA[Garden Manager: Veronica Harris <br>Phone: (216) 402-9220<br>Email: veronicaharris3545@yahoo.com]]></description>
+        <styleUrl>#icon-1582-0F9D58-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            -81.5929618,41.4614924,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Princeton-Benwood Garden</name>
+        <description><![CDATA[Garden Manager: Kenneth Daniels <br>Email: sixminutemile@yahoo.com <br>Phone: (216) 834-9000]]></description>
+        <styleUrl>#icon-1582-0F9D58-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            -81.5970632,41.4508899,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Murtis Taylor Child Enrichment -Kinsman Kids Garden of Love</name>
+        <description><![CDATA[Garden Manager: Terra Thomas Phone: 2162834400ext.,2705<br>Email: tthomas@murtistaylor.org<br>Private garden for kids in their program]]></description>
+        <styleUrl>#icon-1582-0F9D58-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            -81.588801,41.464725,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Saige Farms of Ohio</name>
+        <description><![CDATA[Garden Manager: Christine Lattimore<br>Phone: (216) 633-5009<br>Email: scoobie4life@yahoo.com<br>Avid gardener and composter]]></description>
+        <styleUrl>#icon-1582-0F9D58-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            -81.574609,41.4378041,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Schaefer -Miles Community Garden</name>
+        <description><![CDATA[Garden Manager: Crawford Pickens<br>Email: farmerpickens185@gmail.com]]></description>
+        <styleUrl>#icon-1582-0F9D58-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            -81.5986309,41.445654,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name><![CDATA[Shirl's Nook Garden]]></name>
+        <description><![CDATA[Garden Manager: Shirley Woolfolk <br>Email: woolblazer@aol.com <br>Phone: (216) 374-6245]]></description>
+        <styleUrl>#icon-1582-0F9D58-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            -81.581023,41.46206,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Thea Bowman Intergenerational Garden</name>
+        <description><![CDATA[Garden Manager: Reya McLellan <br>Email: reyamclellan09@gmail.com<br>Email: ariel.hicks@theabowmancenter.org]]></description>
+        <styleUrl>#icon-1582-0F9D58-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            -81.606127,41.46845,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Crooked Branch Farms</name>
+        <description><![CDATA[Farm Manager: Anita Gardner<br>Phone: 2163751022<br> 2164718914<br>Email: moonpuppy6@aol.com]]></description>
+        <styleUrl>#icon-1566-A52714-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            -81.5877988,41.4652796,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Hood Honey</name>
+        <description><![CDATA[Farm Manager: Trey Williams<br>Phone: (216)534-8162<br>Email: hoodhoney216@gmail.com<br>Polleyculture Farms in the back]]></description>
+        <styleUrl>#icon-1566-A52714-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            -81.5997132,41.4659309,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Miles of Love</name>
+        <description><![CDATA[Farm Manager: Manis Smith<br>Phone: (216) 324-3382<br>Email: smithboys72@gmail.com]]></description>
+        <styleUrl>#icon-1566-A52714-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            -81.5833561,41.445525,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>RevLove Urban Farm</name>
+        <description><![CDATA[Farm Manager: Shirley Bell-Wheeler<br>Email: revlovefarm@gmail.com]]></description>
+        <styleUrl>#icon-1566-A52714-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            -81.5968894,41.4730653,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Polleyculture Farms</name>
+        <description><![CDATA[Farm Manager: Alex Polley<br>Phone: (216)780-1264<br>Email: Polleyculture@gmail.com]]></description>
+        <styleUrl>#icon-1566-A52714-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6003973,41.4659382,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Union Market Garden</name>
+        <description><![CDATA[Farm Manager: Grai Oleksy<br>Phone: (216) 704-5855<br>Email: G2oleksy@gmail.com<br>Operated by Vegetative Works LLC]]></description>
+        <styleUrl>#icon-1566-A52714-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6370943,41.463065,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Urban Queen Bee Outside Farmers</name>
+        <description><![CDATA[Farm manager: Andrea Jackson<br>Phone: (216) 401-9042<br>Email: andreaawjck@gmail.com<br><br>Executive Director of Celebrate the Arts Performance Academy Inc. (CAP)<br>Supports Community Gardening at Ab Hart Elementary]]></description>
+        <styleUrl>#icon-1566-A52714-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6476817,41.4791608,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Urban Queen Bee Greenhouse Farmers</name>
+        <description><![CDATA[Farm manager: Andrea Jackson<br>Phone: (216) 401-9042<br>Email: andreaawjck@gmail.com<br><br>Executive Director of Celebrate the Arts Performance Academy Inc. (CAP)<br>Supports Community Gardening at Ab Hart Elementary<br>Spaces prioritized for children and elderly!]]></description>
+        <styleUrl>#icon-1566-A52714-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6470921,41.4773537,0
+          </coordinates>
+        </Point>
+      </Placemark>
+    </Folder>
+    <Folder>
+      <name>Ward 5 and 6 Gardens and Farms</name>
+      <Placemark>
+        <name>E. 39th Community Garden</name>
+        <description><![CDATA[Garden Manager: Andrea Johnson <br>Email: ciptt.inc@ciptt.net<br>Executive Director: Kareemah Rose<br>Email: kareemahwrose@gmail.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6587407,41.4931346,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Community Gardening in the District
+</name>
+        <description><![CDATA[Garden Manager: Erika Ervin<br>Phone: (216) 250-5100<br>Email: gardeninginthedistrict@aol.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.647402,41.493732,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Deborah Garden of Eden</name>
+        <description><![CDATA[Garden Manager: Deborah Lyde <br>Email: deborahlyde@yahoo.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6373272,41.4981087,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Garden of New Beginnings</name>
+        <description><![CDATA[Garden Manager: Jacqueline Brackett <br>Email: jakki734@yahoo.com <br>Phone: (216) 973-0153<br>Cuyahoga County Juvenile Detention Center Private Garden]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6193247,41.4930716,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Gennesareth Prayer Garden</name>
+        <description><![CDATA[Garden Manager: Rev. Brenda Taylor-Rosario <br>Phone: (216) 361-1305]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6476445,41.4946905,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Ka-La Healing Garden Center</name>
+        <description><![CDATA[Garden Manager: Tanya Holmes<br>Phone: (216) 224-9397<br>Email: kalahealinggardencenter@yahoo.com<br>Host Jazz in the Gardens<br>Host Juneteenth Celebration<br>Host Cooking Classes]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6378504,41.4975032,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Lake Galilee Garden</name>
+        <description><![CDATA[Garden Manager: Don Gaddis <br>Email: gaddis_don@yahoo.xom <br>Phone: (216) 355-8236]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6204925,41.4678929,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Quincy Garden</name>
+        <description><![CDATA[Garden Manager: Darla Alexander<br>Phone: (440) 596-8420 <br>Email: appelete475@aol.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.622961,41.493653,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sugar Moon Blooms Garden</name>
+        <description><![CDATA[Garden Manager: Jin Powers <br>Email: Jinjulie911@gmail.com <br>Phone: (216) 618-0903]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.662178,41.499115,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>The Tire Garden </name>
+        <description><![CDATA[Garden Manager: Lashunda Lee <br>Phone: (216) 571-3349 <br>Email: nomoremeetings@gmail.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6337692,41.4960538,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Trinity Cathedral/Charlie Comella Urban Farm</name>
+        <styleUrl>#icon-1582-0F9D58-nodesc</styleUrl>
+        <Point>
+          <coordinates>
+            -81.662451,41.499001,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name><![CDATA[Vel's Purple Oasis Garden]]></name>
+        <description><![CDATA[Garden Manager: Vel Scott<br>Phone: (216) 224-1383 <br>Email: velmscott@gmail.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.610388,41.4979695,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Fairfax Learning Farm</name>
+        <description><![CDATA[Farm Manager: Mike Walton<br>Phone: (216) 972-7106<br>Email: mikeronie123@hotmail.com<br>Hybrid Urban Farm with about 20 community garden boxes]]></description>
+        <styleUrl>#icon-1566-A52714</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6331993,41.4949134,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Food Depot to Health/Fairfax Learning Farm</name>
+        <description><![CDATA[Farm Manager: Mike Walton<br>Phone: (216) 972-7106<br>Email: mikeronie123@hotmail.com]]></description>
+        <styleUrl>#icon-1566-A52714</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6331993,41.4949134,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name><![CDATA[G's Urban Farm and Venue LLC]]></name>
+        <description><![CDATA[Farm Manager: Vernice Davis<br>Phone: (216)513-2573<br>Email: verniceds57@gmail.com<br>Provides intergenerational education and intercultural programing]]></description>
+        <styleUrl>#icon-1566-A52714</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6194453,41.4975258,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Kinsman Farm</name>
+        <description>Also known as UAI</description>
+        <styleUrl>#icon-1566-A52714</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6296715,41.4786439,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Regent Farm</name>
+        <description><![CDATA[Farm Manager: Bernice Sanders <br>Phone: (216) 258-5912<br>Email: myshoptravel@yahoo.com]]></description>
+        <styleUrl>#icon-1566-A52714</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6406816,41.4669774,0
+          </coordinates>
+        </Point>
+      </Placemark>
+    </Folder>
+    <Folder>
+      <name>Ward 4, 7, and 14 Gardens and Farms</name>
+      <Placemark>
+        <name>West 47th Community Garden</name>
+        <description><![CDATA[Garden Manager: Ashley Schreder<br>Phone: (216) 213-4550<br>Email: west47thstreetcommunitygarden@gmail.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.719221,41.483297,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Barrioboy Garden</name>
+        <description><![CDATA[Garden Manager: Jean Paul Hernandez<br>Phone: (216) 258-6094<br>Email: jpaulsackett@gmail.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.7050534,41.4632922,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Benjamin Franklin Community Garden</name>
+        <description><![CDATA[Garden Manger: Jennifer Terry<br>Phone: (216) 860-7674<br>Email: jterry@benfranklincommunitygarden.org]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6933688,41.4337442,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Holmden Hill Garden</name>
+        <description><![CDATA[Garden Manager: Grai Oleksy<br>Phone: (216) 704-5855<br>Email: G2oleksy@gmail.com<br>1085-1149 Holmden Ave]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.687133,41.4671,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Ithaca Court Community Gardens</name>
+        <description><![CDATA[Garden Manager: Peet McCain<br>Phone: (440) 821-7442 <br>Email: ithaca.court@gmail.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.7243249,41.47744,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Kentucky Gardens</name>
+        <description><![CDATA[Contact: kentuckygardenscleveland@gmail.com<br>https://www.kentuckygardens.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.713531,41.4853804,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Neighborhood Family Practice</name>
+        <description><![CDATA[Garden Manager: Hannah Petroni<br>Phone: (216) 313-3838<br>Email: hannahries@gmail.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6855845,41.4800886,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Redeemer Crisis Center @ Iglesia Cristiana Garden</name>
+        <description><![CDATA[Garden Manager: Diane Zellmer<br>Phone: (216) 631-6434<br>Email: ichrcc@aol.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.7017956,41.471456,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Refuge Garden</name>
+        <description><![CDATA[Garden Manager: Amanda Roberts<br>Phone: (216) 215-1542<br>Email: aerowellness@gmail.com<br>Community garden/learning garden for the students of The Garden Christian Academy.]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.710946,41.4619,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Seeds of Love</name>
+        <description><![CDATA[Garden Manager: Dan Leamon<br>Phone: (330) 904-2717<br>Email: dan.leamon@valorhealthplan.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6915293,41.4728309,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name><![CDATA[Shalom & Tranquility]]></name>
+        <description><![CDATA[Garden Manager: Ebonie Randle<br>Phone: (216) 400-9623<br>Email: shalom.tranquilitycg@gmail.com<br>Works with families to learn how to grow food. 5 beds available for families who want to come and learn. Seeds and supplies provided. Just need $20 and a commitment.<br>Other Programs:<br>Movie Nights<br>Supergarden Kids Programs<br>Lego Club<br>Bee Education<br>Literacy for Life]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.710739,41.451876,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name><![CDATA[St. Paul's Patch Garden]]></name>
+        <description><![CDATA[Garden Manager: Brandon Traud <br>Email: bltraud@gmail.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.7178934,41.4845467,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Cleveland Roots</name>
+        <description><![CDATA[Farm Manager: Ibrahiim Jones<br>Phone: (216) 414-7400<br>Email: ibrahiimj@gmail.com<br>In the neighborhood providing everything from flowers for proms and funerals to donating food. <br>They germinate and donate over 100,000 plants a year]]></description>
+        <styleUrl>#icon-1566-A52714</styleUrl>
+        <Point>
+          <coordinates>
+            -81.7130893,41.465275,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Hooper Farm Est 1994</name>
+        <styleUrl>#icon-1566-A52714-nodesc</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6889582,41.4735985,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Ohio City Farm</name>
+        <description><![CDATA[Farm Manager: Michael Bartunek<br>Phone: (440)969-0290<br>Email: michael@resourcecleveland.org]]></description>
+        <styleUrl>#icon-1566-A52714</styleUrl>
+        <Point>
+          <coordinates>
+            -81.7028555,41.4869746,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Other Hand Farm</name>
+        <styleUrl>#icon-1566-A52714-nodesc</styleUrl>
+        <Point>
+          <coordinates>
+            -81.7279737,41.4679106,0
+          </coordinates>
+        </Point>
+      </Placemark>
+    </Folder>
+    <Folder>
+      <name>Ward 8, 9 and 10 Gardens and Farms</name>
+      <Placemark>
+        <name>Africa House Learning Gardens</name>
+        <description><![CDATA[Garden Manager: AkuSika Nkomomackey<br>Phone: (216) 376-7206<br>Email: africahouse@sbcglobal.net]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6317386,41.5109539,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Asian Evergreen Community Garden</name>
+        <description><![CDATA[Garden Manager: Susan Liu<br>Phone: (216) 881-6999<br>Email: susanhuiliu525@gmail.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6614398,41.5102715,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Bell Garden</name>
+        <description><![CDATA[Garden Manager: Shawn Harvey <br>Phone: 2163914100x208 <br>Email: shawn_604@yahoo.com<br>Private Garden, part of the Lexington Bell Center daycare]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6349161,41.5108781,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Collinwood Friends Garden</name>
+        <description><![CDATA[Garden Manager: Katrina Smiley<br>Email: smiley.katarina@gmail.com <br>Phone: (216) 438-1224]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.5716028,41.5761459,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Community Gardening in the District</name>
+        <description><![CDATA[Garden Manager: Erika Ervin<br>Phone: (216) 250-5100<br>Email: gardeninginthedistrict@aol.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.621368,41.525899,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Community Gardening in the District
+</name>
+        <description><![CDATA[Garden Manager: Erika Ervin<br>Phone: (216) 250-5100<br>Email: gardeninginthedistrict@aol.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.618486,41.5243231,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Community Gardening in the District</name>
+        <description><![CDATA[Garden Manager: Erika Ervin<br>Phone: (216) 250-5100<br>Email: gardeninginthedistrict@aol.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6194609,41.5262112,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Daniel Avenue Garden</name>
+        <description><![CDATA[Garden Manager: Casey Fultz<br>Phone: (216) 789-1560<br>Email: kcfultz@aol.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.5733795,41.5689725,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Forest City Garden and Orchard</name>
+        <description><![CDATA[Garden Manager: Five Sankofa<br>Phone Number: Smith (216) 392-0942<br>Email: Forestcitygardenandorchard@gmail.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6132199,41.544751,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Fruit from the Sun</name>
+        <description><![CDATA[Garden Manager: Reginald Campbell<br>Phone: (216) 571-9422<br>Email: rjcampbell216@gmail.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6250957,41.5133669,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Key of Life Healing Garden</name>
+        <description><![CDATA[Garden Manager: Lena Boswell<br>Phone: (216) 773-2750<br>Email: lenaboswell54@gmail.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6287825,41.5186121,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Linwood Gardens</name>
+        <description><![CDATA[Garden Manager: AkuSika Nkomomackey<br>Phone: (216) 376-7206<br>Email: africahouse@sbcglobal.net]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6321674,41.5122176,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Medina Avenue Garden</name>
+        <styleUrl>#icon-1582-0F9D58-nodesc</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6295855,41.5251186,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Rust Belt Garden</name>
+        <description><![CDATA[Garden Manager: Todd Rogers<br>Phone: (216) 272-4496<br>Email: todd@windfox.net]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.66252,41.51552,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>St. Clair Place Community Garden</name>
+        <description><![CDATA[Garden Manager: Veronica Brown<br>Phone: (216) 687-0988<br>Email: brownv@ownerslive.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.653519,41.499035,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>The Healing Garden</name>
+        <description><![CDATA[Garden Manager: Victor Deanda <br>Phone: (216) 703-7719 <br>Email: victordeanda2@gmail.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.639176,41.524019,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Green Movement Glenville</name>
+        <description><![CDATA[Farm Manager: Victoria Trotter<br>Number: (216) 970-8587<br>Email: greenmovementglenville@gmail.com]]></description>
+        <styleUrl>#icon-1566-A52714</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6056457,41.541188,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>League Park Market Garden</name>
+        <description><![CDATA[Farm Manager: Mike Walton<br>Phone: (216) 972-7106<br>Email: mikeronie123@hotmail.com]]></description>
+        <styleUrl>#icon-1566-A52714</styleUrl>
+        <Point>
+          <coordinates>
+            -81.634373,41.5199939,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Lettuce Tree Farms</name>
+        <description>Indoor operations</description>
+        <styleUrl>#icon-1566-A52714</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6553913,41.5222779,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Thrive From The Ground Up</name>
+        <description><![CDATA[Farm Manager: Lytoni Brown-Beckham<br>Phone: (216) 421-5085<br>Email: lytonibrown@gmail.com<br>https://speakintothelight.org/]]></description>
+        <styleUrl>#icon-1566-A52714</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6498274,41.5121723,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Meadow City Native Plant Nursery</name>
+        <description><![CDATA[Farm Manager: Julie Slater<br>Email: julie@meadowcitynursery.com<br>Phone: (216)282-6911<br>Meadow City primarily grows native perennial wildflowers. However, each spring they also offer vegetable starts (including some giveaways to neighbors).]]></description>
+        <styleUrl>#icon-1566-A52714</styleUrl>
+        <Point>
+          <coordinates>
+            -81.5766407,41.5682837,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Village Family Farms</name>
+        <description><![CDATA[Farm Manager: Jamel Rahkeera <br>Email: villagefamilyfarms@gmail.com<br>vffcsa.com<br>"Adamant about passing the torch to the next generation of farmers."]]></description>
+        <styleUrl>#icon-1566-A52714</styleUrl>
+        <Point>
+          <coordinates>
+            -81.6257432,41.5114579,0
+          </coordinates>
+        </Point>
+      </Placemark>
+    </Folder>
+    <Folder>
+      <name>Ward 11, 12, and 13  Gardens and Farms</name>
+      <Placemark>
+        <name>Blessed Trinity Community Garden</name>
+        <description><![CDATA[Garden Manager: Doug Koesel<br>Phone: (216) 288-1266<br>Email: doughk@aol.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.7922301,41.4358016,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>W 112th St Garden</name>
+        <description><![CDATA[Garden Manager: Rebecca Weisenthal<br>Phone: (216) 262-8727<br>Email: rrwrebecca@gmail.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.764391,41.4835191,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>W. 75th St. Community Garden</name>
+        <description><![CDATA[Garden Manager: Mark DiDonato<br>Email: markdidonato76@gmail.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.7365022,41.4809641,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>San Diego Community Garden</name>
+        <description><![CDATA[Garden Manager: Kelly McKay<br>Phone: (216) 789-4581<br>Email: sandiegocommunitygarden@gmail.com]]></description>
+        <styleUrl>#icon-1582-0F9D58</styleUrl>
+        <Point>
+          <coordinates>
+            -81.7874364,41.4525605,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Basil Bee Farm</name>
+        <styleUrl>#icon-1566-A52714-nodesc</styleUrl>
+        <Point>
+          <coordinates>
+            -81.7431624,41.4802051,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Bay Branch Farm</name>
+        <description><![CDATA[Farm Manager: Annabel Khouri<br>Phone: (216)202-5718<br>Email: annabel@baybranchfarm.com<br>Website: http://baybranchfarm.com]]></description>
+        <styleUrl>#icon-1566-A52714</styleUrl>
+        <Point>
+          <coordinates>
+            -81.7664457,41.4539661,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Good Earth</name>
+        <styleUrl>#icon-1566-A52714-nodesc</styleUrl>
+        <Point>
+          <coordinates>
+            -81.7499689,41.4772889,0
+          </coordinates>
+        </Point>
+      </Placemark>
+    </Folder>
+    <Folder>
+      <name><![CDATA[Farmers’ Markets & Farm Stands]]></name>
+      <Placemark>
+        <name>North Union Farmers Market - Shaker Square</name>
+        <address>Shaker Square Cleveland, Ohio 44120 Shaker Square</address>
+        <description><![CDATA[Farm Address: Shaker Square Cleveland, Ohio 44120<br>Neighborhood: Shaker Square<br>Ward: 6<br>Website: https://www.northunionfarmersmarket.org/]]></description>
+        <styleUrl>#icon-1578-9C27B0</styleUrl>
+        <ExtendedData>
+          <Data name="Farm Address">
+            <value>Shaker Square Cleveland, Ohio 44120</value>
+          </Data>
+          <Data name="Neighborhood">
+            <value>Shaker Square</value>
+          </Data>
+          <Data name="Ward">
+            <value>6.0</value>
+          </Data>
+          <Data name="Website">
+            <value>https://www.northunionfarmersmarket.org/</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>Tremont Farmers Market</name>
+        <address>Lincoln Park 1200 Starkweather Avenue, Cleveland, Ohio 44113 Tremont</address>
+        <description><![CDATA[Farm Address: Lincoln Park 1200 Starkweather Avenue, Cleveland, Ohio 44113<br>Neighborhood: Tremont<br>Ward: 3<br>Website: https://experiencetremont.com/featured-events/farmers-market/]]></description>
+        <styleUrl>#icon-1578-9C27B0</styleUrl>
+        <ExtendedData>
+          <Data name="Farm Address">
+            <value>Lincoln Park 1200 Starkweather Avenue, Cleveland, Ohio 44113</value>
+          </Data>
+          <Data name="Neighborhood">
+            <value>Tremont</value>
+          </Data>
+          <Data name="Ward">
+            <value>3.0</value>
+          </Data>
+          <Data name="Website">
+            <value>https://experiencetremont.com/featured-events/farmers-market/</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>Kamm’s Corners Farmers Market</name>
+        <address><![CDATA[16906 Albers Ave, Cleveland, OH 44111 Kamm's Corners]]></address>
+        <description><![CDATA[Farm Address: 16906 Albers Ave, Cleveland, OH 44111<br>Neighborhood: Kamm's Corners<br>Ward: 17<br>Website: https://westparkkamms.org/market/]]></description>
+        <styleUrl>#icon-1578-9C27B0</styleUrl>
+        <ExtendedData>
+          <Data name="Farm Address">
+            <value>16906 Albers Ave, Cleveland, OH 44111</value>
+          </Data>
+          <Data name="Neighborhood">
+            <value><![CDATA[Kamm's Corners]]></value>
+          </Data>
+          <Data name="Ward">
+            <value>17.0</value>
+          </Data>
+          <Data name="Website">
+            <value>https://westparkkamms.org/market/</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>North Union Farmers Market - University Hospitals</name>
+        <address>University Hospitals 2065 Adelbert Rd, Cleveland, OH 44106 University Circle</address>
+        <description><![CDATA[Farm Address: University Hospitals 2065 Adelbert Rd, Cleveland, OH 44106<br>Neighborhood: University Circle<br>Ward: 6<br>Website: https://www.northunionfarmersmarket.org/]]></description>
+        <styleUrl>#icon-1578-9C27B0</styleUrl>
+        <ExtendedData>
+          <Data name="Farm Address">
+            <value>University Hospitals 2065 Adelbert Rd, Cleveland, OH 44106</value>
+          </Data>
+          <Data name="Neighborhood">
+            <value>University Circle</value>
+          </Data>
+          <Data name="Ward">
+            <value>6.0</value>
+          </Data>
+          <Data name="Website">
+            <value>https://www.northunionfarmersmarket.org/</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>Little Africa Food Co-op Farmers Market</name>
+        <address>12910 Soika Ave, Cleveland, OH 44120 Mt. Pleasant</address>
+        <description><![CDATA[Farm Address: 12910 Soika Ave, Cleveland, OH 44120<br>Neighborhood: Mt. Pleasant<br>Ward: 4<br>Website: https://littleafricafco.com/]]></description>
+        <styleUrl>#icon-1578-9C27B0</styleUrl>
+        <ExtendedData>
+          <Data name="Farm Address">
+            <value>12910 Soika Ave, Cleveland, OH 44120</value>
+          </Data>
+          <Data name="Neighborhood">
+            <value>Mt. Pleasant</value>
+          </Data>
+          <Data name="Ward">
+            <value>4.0</value>
+          </Data>
+          <Data name="Website">
+            <value>https://littleafricafco.com/</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>Good Earth Farm Stand</name>
+        <address>9600 Madison Ave, Cleveland, OH 44102 Cudell</address>
+        <description><![CDATA[Farm Address: 9600 Madison Ave, Cleveland, OH 44102<br>Neighborhood: Cudell<br>Ward: 15<br>Website: https://goodearth.today/]]></description>
+        <styleUrl>#icon-1578-9C27B0</styleUrl>
+        <ExtendedData>
+          <Data name="Farm Address">
+            <value>9600 Madison Ave, Cleveland, OH 44102</value>
+          </Data>
+          <Data name="Neighborhood">
+            <value>Cudell</value>
+          </Data>
+          <Data name="Ward">
+            <value>15.0</value>
+          </Data>
+          <Data name="Website">
+            <value>https://goodearth.today/</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>Old Brooklyn Farmers Market</name>
+        <address>4274 Pearl Rd, Cleveland, OH 44109 Old Brooklyn</address>
+        <description><![CDATA[Farm Address: 4274 Pearl Rd, Cleveland, OH 44109<br>Neighborhood: Old Brooklyn<br>Ward: 13<br>Website: https://www.oldbrooklyn.com/market]]></description>
+        <styleUrl>#icon-1578-9C27B0</styleUrl>
+        <ExtendedData>
+          <Data name="Farm Address">
+            <value>4274 Pearl Rd, Cleveland, OH 44109</value>
+          </Data>
+          <Data name="Neighborhood">
+            <value>Old Brooklyn</value>
+          </Data>
+          <Data name="Ward">
+            <value>13.0</value>
+          </Data>
+          <Data name="Website">
+            <value>https://www.oldbrooklyn.com/market</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>North Union Farmers Market - Cleveland Clinic</name>
+        <address>Cleveland Clinic East 100th St, Cleveland, OH 44106 Fairfax</address>
+        <description><![CDATA[Farm Address: Cleveland Clinic East 100th St, Cleveland, OH 44106<br>Neighborhood: Fairfax<br>Ward: 6<br>Website: https://www.northunionfarmersmarket.org/]]></description>
+        <styleUrl>#icon-1578-9C27B0</styleUrl>
+        <ExtendedData>
+          <Data name="Farm Address">
+            <value>Cleveland Clinic East 100th St, Cleveland, OH 44106</value>
+          </Data>
+          <Data name="Neighborhood">
+            <value>Fairfax</value>
+          </Data>
+          <Data name="Ward">
+            <value>6.0</value>
+          </Data>
+          <Data name="Website">
+            <value>https://www.northunionfarmersmarket.org/</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>La Marketa</name>
+        <address>Roberto Clemente Park 3690 Seymour Ave, Cleveland, OH 44113 Clark Fulton</address>
+        <description><![CDATA[Farm Address: Roberto Clemente Park 3690 Seymour Ave, Cleveland, OH 44113<br>Neighborhood: Clark Fulton<br>Ward: 3<br>Website: ]]></description>
+        <styleUrl>#icon-1578-9C27B0</styleUrl>
+        <ExtendedData>
+          <Data name="Farm Address">
+            <value>Roberto Clemente Park 3690 Seymour Ave, Cleveland, OH 44113</value>
+          </Data>
+          <Data name="Neighborhood">
+            <value>Clark Fulton</value>
+          </Data>
+          <Data name="Ward">
+            <value>3.0</value>
+          </Data>
+          <Data name="Website">
+            <value/>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>City Fresh- Slavic Village Fresh Stop</name>
+        <address>Cleveland Public Library - Fleet Branch 7224 Broadway Ave, Cleveland, OH 44105 Slavic Village</address>
+        <description><![CDATA[Farm Address: Cleveland Public Library - Fleet Branch 7224 Broadway Ave, Cleveland, OH 44105<br>Neighborhood: Slavic Village<br>Ward: 12<br>Website: https://cityfresh.org/]]></description>
+        <styleUrl>#icon-1578-9C27B0</styleUrl>
+        <ExtendedData>
+          <Data name="Farm Address">
+            <value>Cleveland Public Library - Fleet Branch 7224 Broadway Ave, Cleveland, OH 44105</value>
+          </Data>
+          <Data name="Neighborhood">
+            <value>Slavic Village</value>
+          </Data>
+          <Data name="Ward">
+            <value>12.0</value>
+          </Data>
+          <Data name="Website">
+            <value>https://cityfresh.org/</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>City Fresh - Coventry Fresh Stop</name>
+        <address>1925 Coventry Rd, Cleveland, OH 44118 Coventry Village</address>
+        <description><![CDATA[Farm Address: 1925 Coventry Rd, Cleveland, OH 44118<br>Neighborhood: Coventry Village<br>Ward: <br>Website: https://cityfresh.org/]]></description>
+        <styleUrl>#icon-1578-9C27B0</styleUrl>
+        <ExtendedData>
+          <Data name="Farm Address">
+            <value>1925 Coventry Rd, Cleveland, OH 44118</value>
+          </Data>
+          <Data name="Neighborhood">
+            <value>Coventry Village</value>
+          </Data>
+          <Data name="Ward">
+            <value/>
+          </Data>
+          <Data name="Website">
+            <value>https://cityfresh.org/</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>City Fresh - Kamm’s Fresh Stop</name>
+        <address><![CDATA[15460 Triskett Rd, Cleveland, OH 44111 Kamm's Corners]]></address>
+        <description><![CDATA[Farm Address: 15460 Triskett Rd, Cleveland, OH 44111<br>Neighborhood: Kamm's Corners<br>Ward: 17<br>Website: https://cityfresh.org/]]></description>
+        <styleUrl>#icon-1578-9C27B0</styleUrl>
+        <ExtendedData>
+          <Data name="Farm Address">
+            <value>15460 Triskett Rd, Cleveland, OH 44111</value>
+          </Data>
+          <Data name="Neighborhood">
+            <value><![CDATA[Kamm's Corners]]></value>
+          </Data>
+          <Data name="Ward">
+            <value>17.0</value>
+          </Data>
+          <Data name="Website">
+            <value>https://cityfresh.org/</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>City Fresh - Ohio City Fresh Stop</name>
+        <address><![CDATA[St. Paul's Community Church UCC 4427 Franklin Blvd, Cleveland, OH 44113 Ohio City]]></address>
+        <description><![CDATA[Farm Address: St. Paul's Community Church UCC 4427 Franklin Blvd, Cleveland, OH 44113<br>Neighborhood: Ohio City<br>Ward: 3<br>Website: https://cityfresh.org/]]></description>
+        <styleUrl>#icon-1578-9C27B0</styleUrl>
+        <ExtendedData>
+          <Data name="Farm Address">
+            <value><![CDATA[St. Paul's Community Church UCC 4427 Franklin Blvd, Cleveland, OH 44113]]></value>
+          </Data>
+          <Data name="Neighborhood">
+            <value>Ohio City</value>
+          </Data>
+          <Data name="Ward">
+            <value>3.0</value>
+          </Data>
+          <Data name="Website">
+            <value>https://cityfresh.org/</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>City Fresh - Old Brooklyn Fresh Stop</name>
+        <address>Old Brooklyn Farmers Market 4274 Pearl Rd, Cleveland, OH 44109 Old Brooklyn</address>
+        <description><![CDATA[Farm Address: Old Brooklyn Farmers Market 4274 Pearl Rd, Cleveland, OH 44109<br>Neighborhood: Old Brooklyn<br>Ward: 13<br>Website: https://cityfresh.org/]]></description>
+        <styleUrl>#icon-1578-9C27B0</styleUrl>
+        <ExtendedData>
+          <Data name="Farm Address">
+            <value>Old Brooklyn Farmers Market 4274 Pearl Rd, Cleveland, OH 44109</value>
+          </Data>
+          <Data name="Neighborhood">
+            <value>Old Brooklyn</value>
+          </Data>
+          <Data name="Ward">
+            <value>13.0</value>
+          </Data>
+          <Data name="Website">
+            <value>https://cityfresh.org/</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>City Fresh - Buckeye-Shaker Fresh Stop</name>
+        <address>Adun Spice Company 12721 Larchmere Blvd, Cleveland, OH 44120 Buckeye-Shaker</address>
+        <description><![CDATA[Farm Address: Adun Spice Company 12721 Larchmere Blvd, Cleveland, OH 44120<br>Neighborhood: Buckeye-Shaker<br>Ward: 6<br>Website: https://cityfresh.org/]]></description>
+        <styleUrl>#icon-1578-9C27B0</styleUrl>
+        <ExtendedData>
+          <Data name="Farm Address">
+            <value>Adun Spice Company 12721 Larchmere Blvd, Cleveland, OH 44120</value>
+          </Data>
+          <Data name="Neighborhood">
+            <value>Buckeye-Shaker</value>
+          </Data>
+          <Data name="Ward">
+            <value>6.0</value>
+          </Data>
+          <Data name="Website">
+            <value>https://cityfresh.org/</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>City Fresh - Collinwood Fresh Stop</name>
+        <address>15901 Lakeshore Blvd, Cleveland, OH 44110 Collinwood</address>
+        <description><![CDATA[Farm Address: 15901 Lakeshore Blvd, Cleveland, OH 44110<br>Neighborhood: Collinwood<br>Ward: 8<br>Website: https://cityfresh.org/]]></description>
+        <styleUrl>#icon-1578-9C27B0</styleUrl>
+        <ExtendedData>
+          <Data name="Farm Address">
+            <value>15901 Lakeshore Blvd, Cleveland, OH 44110</value>
+          </Data>
+          <Data name="Neighborhood">
+            <value>Collinwood</value>
+          </Data>
+          <Data name="Ward">
+            <value>8.0</value>
+          </Data>
+          <Data name="Website">
+            <value>https://cityfresh.org/</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name><![CDATA[Gateway105 Farmers' Market]]></name>
+        <address>1322 E 105th St, Cleveland, OH 44106 Glenville</address>
+        <description><![CDATA[Farm Address: 1322 E 105th St, Cleveland, OH 44106<br>Neighborhood: Glenville<br>Ward: 9<br>Website: https://famicos.org/gateway105]]></description>
+        <styleUrl>#icon-1578-9C27B0</styleUrl>
+        <ExtendedData>
+          <Data name="Farm Address">
+            <value>1322 E 105th St, Cleveland, OH 44106</value>
+          </Data>
+          <Data name="Neighborhood">
+            <value>Glenville</value>
+          </Data>
+          <Data name="Ward">
+            <value>9.0</value>
+          </Data>
+          <Data name="Website">
+            <value>https://famicos.org/gateway105</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>Food For All Friday Market At Euclid Beach</name>
+        <address>15900 Lakeshore Blvd, Cleveland, OH 44110 Collinwood</address>
+        <description><![CDATA[Farm Address: 15900 Lakeshore Blvd, Cleveland, OH 44110<br>Neighborhood: Collinwood<br>Ward: 8<br>Website: ]]></description>
+        <styleUrl>#icon-1578-9C27B0</styleUrl>
+        <ExtendedData>
+          <Data name="Farm Address">
+            <value>15900 Lakeshore Blvd, Cleveland, OH 44110</value>
+          </Data>
+          <Data name="Neighborhood">
+            <value>Collinwood</value>
+          </Data>
+          <Data name="Ward">
+            <value>8.0</value>
+          </Data>
+          <Data name="Website">
+            <value/>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+    </Folder>
+  </Document>
+</kml>
