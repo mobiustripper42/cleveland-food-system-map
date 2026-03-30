@@ -58,8 +58,8 @@ create table locations (
   id            uuid primary key default gen_random_uuid(),
   name          text not null,
   category      text not null check (category in ('garden','farm','market')),
-  lat           numeric(10,7) not null,
-  lng           numeric(10,7) not null,
+  lat           numeric(10,7),          -- nullable: some markets imported without coordinates
+  lng           numeric(10,7),          -- nullable: some markets imported without coordinates
   address       text,
   ward          integer,
   manager_name  text,
@@ -69,11 +69,15 @@ create table locations (
   image_url     text,
   archived      boolean not null default false,
   created_at    timestamptz not null default now(),
-  updated_at    timestamptz not null default now()
+  updated_at    timestamptz not null default now(),
+  constraint locations_name_lat_lng_key unique (name, lat, lng)
 );
 ```
 
-RLS: public read on `archived = false`. Authenticated write for all operations.
+RLS policies:
+- `anon` role: SELECT where `archived = false`
+- `authenticated` role: SELECT all rows (including archived)
+- `authenticated` role: INSERT, UPDATE, DELETE
 
 ---
 
@@ -141,16 +145,29 @@ VITE_SUPABASE_ANON_KEY=
 
 ## Current Phase
 
-**Phase 0 — Pre-Development**
+**Phase 3 — Public Map UI**
 
-- [ ] dev-decisions.md committed to repo
-- [ ] CLAUDE.md committed to repo
-- [ ] GitHub Project board created
-- [ ] All issues created via setup script
-- [ ] Supabase project created
-- [ ] Vercel project created, linked to repo
+### Completed: Phase 2 — Data & Infrastructure
 
-Update this section when a phase is complete.
+- [x] Supabase project created
+- [x] Vercel project created, linked to repo
+- [x] `locations` table created with schema above
+- [x] Unique constraint on `(name, lat, lng)`
+- [x] `lat` and `lng` are nullable — markets missing coordinates imported with null
+- [x] RLS policies in place (anon select archived=false, authenticated select all, authenticated write)
+- [x] Storage bucket `location-images` created — 5MB limit, jpeg/png/webp only
+- [x] KML import script at `scripts/import-kml.ts` — run with `npm run import-kml`
+- [x] 105 records imported from KML
+
+### In Progress: Phase 3 — Public Map UI
+
+- [ ] `src/lib/supabase.ts` — typed Supabase client
+- [ ] `src/lib/types.ts` — shared TypeScript types from DB schema
+- [ ] `src/pages/MapPage.tsx` — public map with react-leaflet
+- [ ] Category-colored pins (green/red/purple per design rules)
+- [ ] Click-to-open location detail panel (mobile sheet, desktop sidebar)
+- [ ] Filter by category
+- [ ] Locations with null lat/lng excluded from map, no error thrown
 
 ---
 
@@ -164,7 +181,7 @@ Focus: TypeScript correctness, security (no exposed keys), RLS policy gaps, mobi
 ### KML Import Validation Agent
 Runs as part of `scripts/import-kml.ts` before any upsert.
 Reports: duplicate names, missing coordinates, malformed email/phone, unknown categories.
-Import halts if critical errors found. Warnings are logged but do not block.
+Critical errors (unrecognized category) skip that record. Warnings (missing coords, no contact, out-of-range ward, outside bounding box) are logged but never block the import.
 
 ---
 
