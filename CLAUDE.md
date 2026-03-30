@@ -143,14 +143,23 @@ VITE_SUPABASE_ANON_KEY=
 
 ---
 
-## Current Phase
+## Completed Phases
 
-**Phase 3 — Public Map UI**
-
-### Completed: Phase 2 — Data & Infrastructure
-
+### Phase 0 — Pre-Development
+- [x] dev-decisions.md committed to repo
+- [x] CLAUDE.md committed to repo
+- [x] GitHub Project board created
+- [x] All issues created via setup script
 - [x] Supabase project created
 - [x] Vercel project created, linked to repo
+
+### Phase 1 — Scaffold
+- [x] Vite + React + TypeScript scaffold initialized
+- [x] react-leaflet, react-router-dom, @supabase/supabase-js installed
+- [x] .env.example committed
+- [x] Repo structure in place per CLAUDE.md
+
+### Phase 2 — Data & Infrastructure
 - [x] `locations` table created with schema above
 - [x] Unique constraint on `(name, lat, lng)`
 - [x] `lat` and `lng` are nullable — markets missing coordinates imported with null
@@ -159,7 +168,11 @@ VITE_SUPABASE_ANON_KEY=
 - [x] KML import script at `scripts/import-kml.ts` — run with `npm run import-kml`
 - [x] 105 records imported from KML
 
-### In Progress: Phase 3 — Public Map UI
+---
+
+## Current Phase
+
+**Phase 3 — Public Map UI**
 
 - [ ] `src/lib/supabase.ts` — typed Supabase client
 - [ ] `src/lib/types.ts` — shared TypeScript types from DB schema
