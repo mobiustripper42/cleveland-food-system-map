@@ -1,0 +1,56 @@
+name: Code Review
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get PR diff
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -s \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github.v3.diff" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}" \
+            | head -c 8000 > pr.diff
+
+      - name: Call Anthropic API
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          jq -n \
+            --rawfile diff pr.diff \
+            '{
+              model: "claude-sonnet-4-20250514",
+              max_tokens: 1024,
+              system: "You are a code reviewer for a React + TypeScript + Supabase web app. Review the diff for: TypeScript correctness, exposed secrets or API keys, Supabase RLS policy gaps, mobile layout issues (mobile-first, 320px baseline), and general bugs. Be concise.",
+              messages: [{ role: "user", content: $diff }]
+            }' \
+            | curl -s \
+              -H "x-api-key: $ANTHROPIC_API_KEY" \
+              -H "anthropic-version: 2023-06-01" \
+              -H "content-type: application/json" \
+              -d @- \
+              "https://api.anthropic.com/v1/messages" \
+            | jq -r '.content[0].text' > review.txt
+
+      - name: Post PR comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          jq -n --rawfile body review.txt \
+            '{ body: ("🤖 **Code Review**\n\n" + $body) }' \
+            | curl -s -X POST \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d @- \
+              "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments"
