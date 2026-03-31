@@ -1,8 +1,7 @@
 import 'leaflet/dist/leaflet.css';
 import { DivIcon } from 'leaflet';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
-import useLocations from '../hooks/useLocations';
-import type { Category } from '../lib/types';
+import type { Category, Location } from '../lib/types';
 
 const CATEGORY_COLOR: Record<Category, string> = {
   garden: '#3a7d44',
@@ -35,11 +34,12 @@ const PIN_ICONS: Record<Category, DivIcon> = {
 
 const CLEVELAND: [number, number] = [41.482, -81.668];
 
-export default function MapView() {
-  const { locations, loading } = useLocations();
+interface Props {
+  locations: Location[];
+  activeCategories: Category[];
+}
 
-  if (loading) return null;
-
+export default function MapView({ locations, activeCategories }: Props) {
   return (
     <MapContainer
       center={CLEVELAND}
@@ -51,7 +51,7 @@ export default function MapView() {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       />
       {locations
-        .filter((loc) => loc.lat !== null && loc.lng !== null)
+        .filter((loc) => loc.lat !== null && loc.lng !== null && activeCategories.includes(loc.category))
         .map((loc) => (
           <Marker
             key={loc.id}
