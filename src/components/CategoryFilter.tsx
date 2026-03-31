@@ -71,6 +71,9 @@ const styles: Record<string, React.CSSProperties> = {
     // hide scrollbar on mobile while keeping scrollability
     msOverflowStyle: 'none',
     scrollbarWidth: 'none',
+    // prevent Leaflet's z-index context from burying this strip on mobile zoom
+    position: 'relative',
+    zIndex: 1000,
   },
   btn: {
     flexShrink: 0,
