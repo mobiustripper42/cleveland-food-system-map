@@ -3,7 +3,8 @@ import useLocations from '../hooks/useLocations';
 import MapView from '../components/MapView';
 import CategoryFilter from '../components/CategoryFilter';
 import SearchBar from '../components/SearchBar';
-import type { Category } from '../lib/types';
+import LocationPanel from '../components/LocationPanel';
+import type { Category, Location } from '../lib/types';
 
 const ALL_CATEGORIES: Category[] = ['garden', 'farm', 'market'];
 
@@ -12,6 +13,7 @@ export default function MapPage() {
   const [activeCategories, setActiveCategories] = useState<Category[]>(ALL_CATEGORIES);
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(query), 200);
@@ -43,8 +45,16 @@ export default function MapPage() {
         onChange={setActiveCategories}
       />
       {!loading && (
-        <MapView locations={filtered} activeCategories={activeCategories} />
+        <MapView
+          locations={filtered}
+          activeCategories={activeCategories}
+          onSelectLocation={setSelectedLocation}
+        />
       )}
+      <LocationPanel
+        location={selectedLocation}
+        onClose={() => setSelectedLocation(null)}
+      />
     </div>
   );
 }
