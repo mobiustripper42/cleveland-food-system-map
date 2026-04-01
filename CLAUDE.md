@@ -168,19 +168,37 @@ VITE_SUPABASE_ANON_KEY=
 - [x] KML import script at `scripts/import-kml.ts` — run with `npm run import-kml`
 - [x] 105 records imported from KML
 
+### Phase 3 — Public Map UI
+- [x] `src/lib/supabase.ts` — typed Supabase client
+- [x] `src/lib/types.ts` — shared TypeScript types from DB schema
+- [x] `src/pages/MapPage.tsx` — public map with react-leaflet
+- [x] Category-colored pins (green/red/purple per design rules)
+- [x] Click-to-open location detail panel (mobile sheet, desktop sidebar overlay)
+- [x] Filter by category with counts
+- [x] Client-side text search (name + notes, debounced 200ms)
+- [x] Locations with null lat/lng excluded from map, no error thrown
+- [x] Accessibility pass — ARIA labels, keyboard nav, focus management, WCAG AA contrast
+- [x] Mobile zoom buttons fixed (custom `<button>` control, no `<a href="#">`)
+- [x] Mobile keyboard/viewport fix (`100dvh`)
+- [ ] Custom pin icons — #50 (deferred, needs design reference)
+- [ ] Collapsible search/filter strip — #45 (deferred)
+- [ ] Desktop sidebar pushes map — #48 (deferred)
+
 ---
 
 ## Current Phase
 
-**Phase 3 — Public Map UI**
+**Phase 4 — Admin UI**
 
-- [ ] `src/lib/supabase.ts` — typed Supabase client
-- [ ] `src/lib/types.ts` — shared TypeScript types from DB schema
-- [ ] `src/pages/MapPage.tsx` — public map with react-leaflet
-- [ ] Category-colored pins (green/red/purple per design rules)
-- [ ] Click-to-open location detail panel (mobile sheet, desktop sidebar)
-- [ ] Filter by category
-- [ ] Locations with null lat/lng excluded from map, no error thrown
+- [ ] Auth flow — login page with magic link + Google OAuth + GitHub OAuth (#26)
+- [ ] Protected route — redirect unauthenticated to /login (#27)
+- [ ] Admin location list view (#28)
+- [ ] Add location form (#29)
+- [ ] Edit location form (#30)
+- [ ] Archive / restore location (#31)
+- [ ] Image upload — Supabase Storage (#32)
+- [ ] Form validation — client and Supabase (#33)
+- [ ] Mobile-first admin layout (#34)
 
 ---
 
