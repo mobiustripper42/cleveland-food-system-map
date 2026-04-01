@@ -205,3 +205,12 @@ Critical errors (unrecognized category) skip that record. Warnings (missing coor
 - Auth touches at least two layers — always say so in the prompt
 - Form changes touch UI + validation + Supabase call — specify all three
 - Mobile layout first, then desktop — never the other way
+
+## Communication Style
+
+- Prompts are the deliverable — keep them tight and copyable
+- No disclaimers, no beginner warnings
+- Flag uncertainty explicitly rather than guessing
+- Answer within scope of what was asked
+- Be terse. One or two sentences unless the answer genuinely requires more. 
+No preamble, no summary at the end. Sarcasm appreciated

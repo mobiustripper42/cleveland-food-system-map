@@ -1,7 +1,54 @@
 import 'leaflet/dist/leaflet.css';
 import { DivIcon } from 'leaflet';
-import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import type { Category, Location } from '../lib/types';
+
+function ZoomControl() {
+  const map = useMap();
+  return (
+    <div style={zoomStyles.wrap}>
+      <button
+        aria-label="Zoom in"
+        style={zoomStyles.btn}
+        onClick={() => map.zoomIn()}
+      >+</button>
+      <button
+        aria-label="Zoom out"
+        style={{ ...zoomStyles.btn, borderTop: '1px solid #ccc' }}
+        onClick={() => map.zoomOut()}
+      >−</button>
+    </div>
+  );
+}
+
+const zoomStyles: Record<string, React.CSSProperties> = {
+  wrap: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    zIndex: 1000,
+    display: 'flex',
+    flexDirection: 'column',
+    boxShadow: '0 1px 5px rgba(0,0,0,0.4)',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  btn: {
+    width: 30,
+    height: 30,
+    background: '#fff',
+    border: 'none',
+    fontSize: 18,
+    fontWeight: 700,
+    lineHeight: 1,
+    cursor: 'pointer',
+    color: '#333',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 0,
+  },
+};
 
 const CATEGORY_COLOR: Record<Category, string> = {
   garden: '#3a7d44',
@@ -44,8 +91,10 @@ export default function MapView({ locations, activeCategories }: Props) {
     <MapContainer
       center={CLEVELAND}
       zoom={12}
+      zoomControl={false}
       style={{ height: 'calc(100vh - 56px)', width: '100%' }}
     >
+      <ZoomControl />
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
