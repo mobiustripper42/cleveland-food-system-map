@@ -3,6 +3,7 @@ import { DivIcon } from 'leaflet';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import type { Category, Location } from '../lib/types';
 
+
 function ZoomControl() {
   const map = useMap();
   return (
@@ -84,9 +85,10 @@ const CLEVELAND: [number, number] = [41.482, -81.668];
 interface Props {
   locations: Location[];
   activeCategories: Category[];
+  onSelectLocation: (location: Location) => void;
 }
 
-export default function MapView({ locations, activeCategories }: Props) {
+export default function MapView({ locations, activeCategories, onSelectLocation }: Props) {
   return (
     <MapContainer
       center={CLEVELAND}
@@ -106,6 +108,7 @@ export default function MapView({ locations, activeCategories }: Props) {
             key={loc.id}
             position={[loc.lat as number, loc.lng as number]}
             icon={PIN_ICONS[loc.category]}
+            eventHandlers={{ click: () => onSelectLocation(loc) }}
           />
         ))}
     </MapContainer>
