@@ -42,6 +42,7 @@ const styles: Record<string, React.CSSProperties> = {
     outline: 'none',
     fontFamily: 'inherit',
     color: '#08060d',
+    backgroundColor: '#fff',
     appearance: 'none',
     WebkitAppearance: 'none',
   },

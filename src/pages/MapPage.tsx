@@ -35,7 +35,7 @@ export default function MapPage() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', overflow: 'hidden' }}>
       <SearchBar value={query} onChange={setQuery} />
       <CategoryFilter
         activeCategories={activeCategories}
