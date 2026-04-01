@@ -57,11 +57,18 @@ const CATEGORY_COLOR: Record<Category, string> = {
   market: '#7b2d8b',
 };
 
+const CATEGORY_LABEL: Record<Category, string> = {
+  garden: 'Community Garden',
+  farm:   'Urban Farm',
+  market: 'Farmers Market / Farm Stand',
+};
+
 function makePinIcon(category: Category): DivIcon {
   const color = CATEGORY_COLOR[category];
+  const label = CATEGORY_LABEL[category];
   // Teardrop: circle body tapering to a downward point
   const svg =
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 32" width="24" height="32">` +
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 32" width="24" height="32" role="img" aria-label="${label}">` +
     `<path d="M12 0C7.58 0 4 3.58 4 8c0 5.25 8 16 8 16s8-10.75 8-16c0-4.42-3.58-8-8-8z"` +
     ` fill="${color}" stroke="rgba(0,0,0,0.25)" stroke-width="1"/>` +
     `</svg>`;
@@ -95,6 +102,7 @@ export default function MapView({ locations, activeCategories, onSelectLocation 
       zoom={12}
       zoomControl={false}
       style={{ height: 'calc(100vh - 56px)', width: '100%' }}
+      aria-label="Map of Cleveland food resources"
     >
       <ZoomControl />
       <TileLayer
@@ -108,6 +116,8 @@ export default function MapView({ locations, activeCategories, onSelectLocation 
             key={loc.id}
             position={[loc.lat as number, loc.lng as number]}
             icon={PIN_ICONS[loc.category]}
+            title={loc.name}
+            alt={`${CATEGORY_LABEL[loc.category]}: ${loc.name}`}
             eventHandlers={{ click: () => onSelectLocation(loc) }}
           />
         ))}

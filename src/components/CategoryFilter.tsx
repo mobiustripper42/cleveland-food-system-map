@@ -40,7 +40,7 @@ export default function CategoryFilter({ activeCategories, counts, onChange }: P
           <button
             key={cat}
             onClick={() => toggle(cat)}
-            disabled={isLast}
+            aria-disabled={isLast}
             aria-pressed={active}
             style={{
               ...styles.btn,

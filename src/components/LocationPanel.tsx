@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import useIsDesktop from '../hooks/useIsDesktop';
 import type { Category, Location } from '../lib/types';
 
@@ -20,6 +21,25 @@ interface Props {
 
 export default function LocationPanel({ location, onClose }: Props) {
   const isDesktop = useIsDesktop();
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const previousFocusRef = useRef<Element | null>(null);
+
+  useEffect(() => {
+    if (location) {
+      previousFocusRef.current = document.activeElement;
+      closeRef.current?.focus();
+    } else if (previousFocusRef.current instanceof HTMLElement) {
+      previousFocusRef.current.focus();
+    }
+  }, [location]);
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape' && location) onClose();
+    }
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [location, onClose]);
 
   if (!location) return null;
 
@@ -61,8 +81,8 @@ export default function LocationPanel({ location, onClose }: Props) {
         />
       )}
 
-      <div style={panelStyle} role="dialog" aria-label={location.name}>
-        <button style={styles.close} onClick={onClose} aria-label="Close">×</button>
+      <div style={panelStyle} role="dialog" aria-modal="true" aria-label={location.name}>
+        <button ref={closeRef} style={styles.close} onClick={onClose} aria-label="Close">×</button>
 
         {location.image_url && (
           <img
