@@ -1,29 +1,26 @@
 import Link from 'next/link';
+import { getSession } from '@/lib/session';
 import { Button } from './ui/button';
-import { createClient } from '@/lib/supabase/server';
 import { LogoutButton } from './logout-button';
 
 export async function AuthButton() {
-  const supabase = await createClient();
+  const session = await getSession();
 
-  // You can also use getUser() which will be slower.
-  const { data } = await supabase.auth.getClaims();
-
-  const user = data?.claims;
-
-  return user ? (
+  return session ? (
     <div className="flex items-center gap-4">
-      <span className="hidden sm:inline">Hey, {user.email}!</span>
+      <Link
+        href="/account"
+        className="underline underline-offset-4 truncate max-w-[12rem]"
+        style={{ color: '#1d4ed8' }}
+      >
+        <span className="hidden sm:inline">{session.user.email}</span>
+        <span className="sm:hidden">Account</span>
+      </Link>
       <LogoutButton />
     </div>
   ) : (
-    <div className="flex gap-2">
-      <Button asChild size="sm" variant={'outline'}>
-        <Link href="/auth/login">Sign in</Link>
-      </Button>
-      <Button asChild size="sm" variant={'default'}>
-        <Link href="/auth/sign-up">Sign up</Link>
-      </Button>
-    </div>
+    <Button asChild size="sm" variant="outline">
+      <Link href="/login">Sign in</Link>
+    </Button>
   );
 }

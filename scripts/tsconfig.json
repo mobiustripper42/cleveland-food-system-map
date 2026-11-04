@@ -39,5 +39,5 @@
     "moduleDetection": "force",
     "skipLibCheck": true
   },
-  "include": ["import-kml.ts"]
+  "include": ["import-kml.ts", "add-editor.ts"]
 }

@@ -1,20 +1,31 @@
-import { updateSession } from "@/lib/supabase/proxy";
-import { type NextRequest } from "next/server";
+import { getSessionCookie } from 'better-auth/cookies';
+import { NextResponse, type NextRequest } from 'next/server';
 
-export async function proxy(request: NextRequest) {
-  return await updateSession(request);
+// Default-deny: anything not listed here requires a session. This is an
+// optimistic cookie check only — pages and actions verify with getSession(),
+// and public pages rely on query filters, not this, to hide editor-only data.
+function isPublic(pathname: string) {
+  return (
+    pathname === '/' ||
+    pathname === '/map' ||
+    pathname === '/login' ||
+    pathname.startsWith('/api/auth/')
+  );
+}
+
+export function proxy(request: NextRequest) {
+  if (isPublic(request.nextUrl.pathname) || getSessionCookie(request)) {
+    return NextResponse.next();
+  }
+  const url = request.nextUrl.clone();
+  url.pathname = '/login';
+  url.search = '';
+  return NextResponse.redirect(url);
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - images - .svg, .png, .jpg, .jpeg, .gif, .webp
-     * Feel free to modify this pattern to include more paths.
-     */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // Everything except Next internals and static images.
+    '/((?!_next/static|_next/image|favicon.ico|.*\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

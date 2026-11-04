@@ -19,11 +19,9 @@ const ALL_CATEGORIES: Category[] = ['garden', 'farm', 'market'];
 export default function MapClient({
   locations,
   contacts,
-  canEdit,
 }: {
   locations: Location[];
   contacts: EditorContacts;
-  canEdit: Promise<boolean>;
 }) {
   const [activeCategories, setActiveCategories] =
     useState<Category[]>(ALL_CATEGORIES);
@@ -124,7 +122,6 @@ export default function MapClient({
       <LocationPanel
         location={selectedLocation}
         contacts={contacts}
-        canEdit={canEdit}
         userPosition={userPosition}
         onClose={() => setSelectedId(null)}
       />

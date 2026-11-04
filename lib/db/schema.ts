@@ -2,7 +2,7 @@
  * Database schema — source of truth for tables, constraints, and RLS policies.
  *
  * TS keys are snake_case on purpose: `$inferSelect` then matches the row shape
- * supabase-js (PostgREST) returns, so client types derive from this file.
+ * the app's client code uses, so client types derive from this file.
  *
  * Generate migrations with `npm run db:generate`. Functions, triggers, and
  * grants that Drizzle can't express live in the custom migrations under drizzle/.
@@ -15,6 +15,7 @@ import {
   numeric,
   pgEnum,
   pgPolicy,
+  pgRole,
   pgTable,
   primaryKey,
   smallint,
@@ -22,17 +23,20 @@ import {
   time,
   timestamp,
   unique,
-  uuid,
 } from 'drizzle-orm/pg-core';
-import {
-  anonRole,
-  authenticatedRole,
-  authUid,
-  authUsers,
-} from 'drizzle-orm/supabase';
+import { user } from './auth-schema.ts';
+
+export * from './auth-schema.ts';
+
+// Every app query runs as the DATABASE_URL owner, which bypasses RLS.
+// asUser() (index.ts) drops to this role for user-initiated writes and sets
+// app.user_id, which public.current_user_id() reads. Created in the
+// auth_prep custom migration so it works on any Postgres, not just Supabase.
+const appUser = pgRole('app_user').existing();
+const currentUserId = sql`(select public.current_user_id())`;
 
 // KSUID generated in Postgres (public.gen_ksuid, see custom migration) so
-// inserts from supabase-js, Drizzle, and the dashboard all get one.
+// inserts from Drizzle, scripts, and a SQL console all get one.
 const ksuidPk = () =>
   text('id')
     .primaryKey()
@@ -45,38 +49,38 @@ const createdAt = () =>
 
 // All four are owned by the set_audit_fields trigger (see custom migration):
 // client-supplied values are overwritten, so they can't be spoofed via the API.
-// *_by is null for service-role writes (KML import, dashboard).
+// *_by is null for writes outside asUser() (KML import, scripts, SQL console).
 const audit = {
   created_at: createdAt(),
   updated_at: timestamp('updated_at', { withTimezone: true, mode: 'string' })
     .notNull()
     .defaultNow(),
-  created_by: uuid('created_by').references(() => authUsers.id, {
+  created_by: text('created_by').references(() => user.id, {
     onDelete: 'set null',
   }),
-  updated_by: uuid('updated_by').references(() => authUsers.id, {
+  updated_by: text('updated_by').references(() => user.id, {
     onDelete: 'set null',
   }),
 };
 
-// Signed in != editor: OAuth lets anyone with a Google/GitHub account create a
+// Signed in != editor: sign-up is open (email code, password, Google, Facebook), so anyone can create a
 // session. Write access and PII require a row in `editors`.
-const isEditor = sql`exists (select 1 from public.editors where user_id = ${authUid})`;
+const isEditor = sql`exists (select 1 from public.editors where user_id = ${currentUserId})`;
 
 const editorWritePolicies = (table: string) => [
   pgPolicy(`${table}_select_editor`, {
     for: 'select',
-    to: authenticatedRole,
+    to: appUser,
     using: isEditor,
   }),
   pgPolicy(`${table}_insert_editor`, {
     for: 'insert',
-    to: authenticatedRole,
+    to: appUser,
     withCheck: isEditor,
   }),
   pgPolicy(`${table}_update_editor`, {
     for: 'update',
-    to: authenticatedRole,
+    to: appUser,
     using: isEditor,
     withCheck: isEditor,
   }),
@@ -85,25 +89,25 @@ const editorWritePolicies = (table: string) => [
 const editorDeletePolicy = (table: string) =>
   pgPolicy(`${table}_delete_editor`, {
     for: 'delete',
-    to: authenticatedRole,
+    to: appUser,
     using: isEditor,
   });
 
 export const editors = pgTable.withRLS(
   'editors',
   {
-    user_id: uuid('user_id')
+    user_id: text('user_id')
       .primaryKey()
-      .references(() => authUsers.id, { onDelete: 'cascade' }),
+      .references(() => user.id, { onDelete: 'cascade' }),
     created_at: createdAt(),
   },
   () => [
     // Read-own-row only; this is what lets `isEditor` resolve inside policies.
-    // Rows are managed from the Supabase dashboard (service role bypasses RLS).
+    // Rows are added with `npm run add-editor` (owner role bypasses RLS).
     pgPolicy('editors_select_self', {
       for: 'select',
-      to: authenticatedRole,
-      using: sql`user_id = ${authUid}`,
+      to: appUser,
+      using: sql`user_id = ${currentUserId}`,
     }),
   ],
 );
@@ -135,7 +139,7 @@ export const locations = pgTable.withRLS(
     ward: smallint('ward'),
     website: text('website'),
     notes: text('notes'),
-    // Object path inside the `location-images` bucket, not a URL.
+    // Object path relative to LOCATION_IMAGES_BASE_URL, not a URL.
     image_path: text('image_path'),
     ...audit,
   },
@@ -159,7 +163,7 @@ export const locations = pgTable.withRLS(
 
     pgPolicy('locations_select_public', {
       for: 'select',
-      to: [anonRole, authenticatedRole],
+      to: appUser,
       using: sql`${t.status} = 'published'`,
     }),
     ...editorWritePolicies('locations'),
@@ -206,7 +210,7 @@ export const marketSchedules = pgTable.withRLS(
     // inside the subquery).
     pgPolicy('market_schedules_select_public', {
       for: 'select',
-      to: [anonRole, authenticatedRole],
+      to: appUser,
       using: sql`exists (select 1 from public.locations l where l.id = ${t.location_id})`,
     }),
     ...editorWritePolicies('market_schedules'),
@@ -214,7 +218,8 @@ export const marketSchedules = pgTable.withRLS(
   ],
 );
 
-// Manager PII. No anon policy (and anon grants revoked) — invisible to the public.
+// Manager PII. Editors only — getEditorContacts() applies the same rule for
+// the owner-role reads that bypass RLS.
 export const contacts = pgTable.withRLS(
   'contacts',
   {
