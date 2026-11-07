@@ -2,8 +2,7 @@ import 'server-only';
 import { and, asc, eq } from 'drizzle-orm';
 import { cacheLife, cacheTag } from 'next/cache';
 import { cache } from 'react';
-import { createClient } from '@/lib/supabase/server';
-import { LOCATION_IMAGES_BUCKET } from '@/src/lib/location-images';
+import { getSession } from '@/lib/session';
 import { db } from './index';
 import {
   contacts,
@@ -13,9 +12,9 @@ import {
   marketSchedules,
 } from './schema';
 
-// Supabase serves public buckets at a fixed URL; no client needed.
+// Public bucket base URL (Supabase Storage today, R2 later); no client needed.
 function locationImageUrl(path: string): string {
-  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${LOCATION_IMAGES_BUCKET}/${path}`;
+  return `${process.env.LOCATION_IMAGES_BASE_URL}/${path}`;
 }
 
 /** Expire with updateTag() after any write that changes the public map. */
@@ -74,9 +73,7 @@ export async function getPublishedLocations() {
  * call inside 'use cache'. Deduped per request.
  */
 export const isEditor = cache(async (): Promise<boolean> => {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  const userId = data?.claims.sub;
+  const userId = (await getSession())?.user.id;
   if (!userId) return false;
 
   const [editor] = await db
