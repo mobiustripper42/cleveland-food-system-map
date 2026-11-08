@@ -1,19 +1,18 @@
-export type Category = 'garden' | 'farm' | 'market';
+import type { locationCategory } from '@/lib/db/schema';
+import type {
+  getEditorContacts,
+  getPublishedLocations,
+} from '@/lib/db/queries';
 
-export interface Location {
-  id: string;
-  name: string;
-  category: Category;
-  lat: number | null;
-  lng: number | null;
-  address: string | null;
-  ward: number | null;
-  manager_name: string | null;
-  phone: string | null;
-  email: string | null;
-  notes: string | null;
-  image_url: string | null;
-  archived: boolean;
-  created_at: string;
-  updated_at: string;
-}
+export type Category = (typeof locationCategory.enumValues)[number];
+
+/** A location as the public map receives it (see getPublishedLocations). */
+export type Location = Awaited<
+  ReturnType<typeof getPublishedLocations>
+>[number];
+export type MarketSchedule = Location['schedules'][number];
+export type NewLocation = Omit<Location, 'id'>;
+
+/** Resolves to null for anyone who isn't an editor. */
+export type EditorContacts = ReturnType<typeof getEditorContacts>;
+export type Contact = NonNullable<Awaited<EditorContacts>>[string][number];
