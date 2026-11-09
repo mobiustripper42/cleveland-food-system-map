@@ -9,7 +9,7 @@ export function LogoutButton() {
 
   const logout = async () => {
     await authClient.signOut();
-    router.push('/map');
+    router.push('/');
     router.refresh(); // drop editor-only data rendered for the old session
   };
 

@@ -7,7 +7,6 @@ import { NextResponse, type NextRequest } from 'next/server';
 function isPublic(pathname: string) {
   return (
     pathname === '/' ||
-    pathname === '/map' ||
     pathname === '/login' ||
     pathname.startsWith('/api/auth/')
   );

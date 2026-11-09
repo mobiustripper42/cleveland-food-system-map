@@ -237,6 +237,28 @@ export const contacts = pgTable.withRLS(
   ],
 );
 
+// Editor-managed HTML for fixed page slots (top, footer). Keys are defined in
+// code (SECTION_KEYS in lib/sections.ts) and seeded by migration. HTML is
+// sanitized on save and again on render.
+export const siteSections = pgTable.withRLS(
+  'site_sections',
+  {
+    key: text('key').primaryKey(),
+    html: text('html').notNull().default(''),
+    ...audit,
+  },
+  (t) => [
+    check('site_sections_key_format', sql`${t.key} ~ '^[a-z][a-z0-9_-]*$'`),
+    pgPolicy('site_sections_select_public', {
+      for: 'select',
+      to: appUser,
+      using: sql`true`,
+    }),
+    ...editorWritePolicies('site_sections'),
+    // No delete policy: empty html hides a section.
+  ],
+);
+
 export const locationContacts = pgTable.withRLS(
   'location_contacts',
   {
