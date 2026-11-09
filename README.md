@@ -1,73 +1,26 @@
-# React + TypeScript + Vite
+# Cleveland Food System Map
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Public map of Cleveland community gardens, urban farms, and farmers markets, with a small
+editor area. Live at [clevelandfoodsystem.land](https://clevelandfoodsystem.land).
 
-Currently, two official plugins are available:
+Next.js 16 · react-leaflet/OpenStreetMap · Postgres via Drizzle · BetterAuth. See `CLAUDE.md`
+for architecture and rules, `dev-decisions.md` for the why.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Local setup
 
-## React Compiler
+1. `npm install`
+2. `cp .env.example .env.local` and fill it in (Postgres URL, BetterAuth secret, OAuth apps,
+   Resend API key, photo base URL). OAuth callback URLs are `http://localhost:3000/api/auth/callback/google`
+   and `.../facebook`.
+3. `npm run db:migrate`
+4. `npm run add-editor -- you@example.org` to give yourself editor access
+5. `npm run dev` → http://localhost:3000
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Scripts
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+| Command                              | What it does                                 |
+| ------------------------------------ | -------------------------------------------- |
+| `npm run dev` / `build` / `start`    | Next.js                                      |
+| `npm run db:generate` / `db:migrate` | Drizzle migrations (`drizzle/`)              |
+| `npm run import-kml -- [--dry-run]`  | Import/upsert locations from the KML export  |
+| `npm run add-editor -- <email>`      | Create the user if needed and make it editor |
