@@ -28,6 +28,8 @@ import {
   locations,
   type locationCategory,
 } from '../lib/db/schema.ts';
+import { formatAddress, parseOneLineAddress } from '../lib/address.ts';
+import { geocodeAddress, outsideCleveland } from '../lib/geocode.ts';
 
 // ---------------------------------------------------------------------------
 // Env
@@ -67,7 +69,10 @@ interface LocationRecord {
   category: Category;
   lat: number | null;
   lng: number | null;
-  address: string | null;
+  street: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
   ward: number | null;
   website: string | null;
   notes: string | null;
@@ -206,47 +211,6 @@ function cleanAddress(raw: string | null | undefined): string | null {
   return (raw.match(/^.*\b\d{5}\b/)?.[0] ?? raw).trim() || null;
 }
 
-// US Census one-line geocoder: free, no key, US addresses only. Tolerates
-// venue prefixes ("Lincoln Park 1200 Starkweather Ave…"); misses bare place
-// names ("Shaker Square…"), which stay null for an editor to pin.
-async function geocode(
-  address: string,
-): Promise<{ lat: number; lng: number } | null> {
-  const url = new URL(
-    'https://geocoding.geo.census.gov/geocoder/locations/onelineaddress',
-  );
-  url.search = new URLSearchParams({
-    address,
-    benchmark: 'Public_AR_Current',
-    format: 'json',
-  }).toString();
-  const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
-  if (!res.ok) throw new Error(`geocoder HTTP ${res.status}`);
-  const body = (await res.json()) as {
-    result: { addressMatches: { coordinates: { x: number; y: number } }[] };
-  };
-  const match = body.result.addressMatches[0];
-  return match ? { lat: match.coordinates.y, lng: match.coordinates.x } : null;
-}
-
-// ---------------------------------------------------------------------------
-// Cleveland bounding box
-// ---------------------------------------------------------------------------
-
-const CLE_LAT_MIN = 41.35;
-const CLE_LAT_MAX = 41.6;
-const CLE_LNG_MIN = -82.0;
-const CLE_LNG_MAX = -81.45;
-
-function outsideCleveland(lat: number, lng: number): boolean {
-  return (
-    lat < CLE_LAT_MIN ||
-    lat > CLE_LAT_MAX ||
-    lng < CLE_LNG_MIN ||
-    lng > CLE_LNG_MAX
-  );
-}
-
 // ---------------------------------------------------------------------------
 // KML parsing
 // ---------------------------------------------------------------------------
@@ -359,7 +323,7 @@ function parsePlacemark(
         category,
         lat,
         lng,
-        address,
+        ...parseOneLineAddress(address),
         ward,
         website,
         notes: desc.notes,
@@ -442,7 +406,8 @@ async function resolveCoords(
   if (existing?.lat != null && existing.lng != null)
     return { lat: existing.lat, lng: existing.lng };
 
-  const coords = await geocode(location.address!);
+  const match = await geocodeAddress(location);
+  const coords = match && { lat: match.lat, lng: match.lng };
   if (coords && existing)
     await tx.update(locations).set(coords).where(eq(locations.id, existing.id));
   return coords;
@@ -464,7 +429,7 @@ async function writeRecords(
   await db.transaction(async (tx) => {
     for (const { location: parsed, contacts: people } of records) {
       let location = parsed;
-      if (location.lat === null && location.address) {
+      if (location.lat === null && location.street) {
         const coords = await resolveCoords(tx, location).catch(
           (e: Error) => `geocoding failed (${e.message})`,
         );
@@ -473,7 +438,7 @@ async function writeRecords(
           counts.geocoded++;
         } else {
           warnings.push(
-            `"${location.name}": ${coords ?? `no geocoder match for "${location.address}"`} — imported with null lat/lng`,
+            `"${location.name}": ${coords ?? `no geocoder match for "${formatAddress(location)}"`} — imported with null lat/lng`,
           );
         }
       }
@@ -486,7 +451,10 @@ async function writeRecords(
           target: [locations.name, locations.lat, locations.lng],
           set: {
             category: sql`excluded.category`,
-            address: sql`excluded.address`,
+            street: sql`excluded.street`,
+            city: sql`excluded.city`,
+            state: sql`excluded.state`,
+            zip: sql`excluded.zip`,
             ward: sql`excluded.ward`,
             website: sql`excluded.website`,
             notes: sql`excluded.notes`,
