@@ -10,7 +10,14 @@ import {
   locationContacts,
   locations,
   marketSchedules,
+  siteSections,
 } from './schema';
+import {
+  isSectionKey,
+  sanitizeSectionHtml,
+  SECTION_KEYS,
+  type SectionKey,
+} from '@/lib/sections';
 
 // Public bucket base URL (Supabase Storage today, R2 later); no client needed.
 function locationImageUrl(path: string): string {
@@ -66,6 +73,45 @@ export async function getPublishedLocations() {
     image_url: image_path ? locationImageUrl(image_path) : null,
     schedules: schedules.filter((s) => s.location_id === loc.id),
   }));
+}
+
+/** Expire with updateTag() after saving a site section. */
+export const SECTIONS_TAG = 'site-sections';
+
+/**
+ * Sanitized HTML per page slot; missing or empty rows → ''. Public.
+ * Cached for the max lifetime (30-day revalidate): saveSection() expires it
+ * with updateTag(SECTIONS_TAG). Edits made outside the app (SQL console) won't
+ * show until then — redeploy or save from /admin/sections to refresh.
+ */
+export async function getSiteSections(): Promise<Record<SectionKey, string>> {
+  'use cache';
+  cacheLife('max');
+  cacheTag(SECTIONS_TAG);
+
+  const rows = await db
+    .select({ key: siteSections.key, html: siteSections.html })
+    .from(siteSections);
+
+  const out = Object.fromEntries(SECTION_KEYS.map((k) => [k, ''])) as Record<
+    SectionKey,
+    string
+  >;
+  for (const { key, html } of rows) {
+    if (isSectionKey(key)) out[key] = sanitizeSectionHtml(html);
+  }
+  return out;
+}
+
+/** Raw (stored) section HTML for the editor form, or null unless an editor. */
+export async function getEditorSections() {
+  if (!(await isEditor())) return null;
+  const rows = await db
+    .select({ key: siteSections.key, html: siteSections.html })
+    .from(siteSections);
+  return Object.fromEntries(
+    SECTION_KEYS.map((k) => [k, rows.find((r) => r.key === k)?.html ?? '']),
+  ) as Record<SectionKey, string>;
 }
 
 /**
