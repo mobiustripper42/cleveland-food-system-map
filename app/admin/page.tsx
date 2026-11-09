@@ -44,6 +44,26 @@ async function AdminLinks() {
         </Link>
         <p className="text-sm">The HTML above the map and in the footer.</p>
       </li>
+      <li>
+        <Link
+          href="/admin/locations/new"
+          className="underline underline-offset-4"
+          style={linkStyle}
+        >
+          Add location
+        </Link>
+        <p className="text-sm">Create a garden, farm, or market.</p>
+      </li>
+      <li>
+        <Link
+          href="/admin/editors"
+          className="underline underline-offset-4"
+          style={linkStyle}
+        >
+          Editors
+        </Link>
+        <p className="text-sm">Who can use these admin tools.</p>
+      </li>
     </ul>
   );
 }
