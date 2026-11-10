@@ -1,13 +1,13 @@
 import { Suspense, use, useEffect, useRef } from 'react';
-import useIsDesktop from '../hooks/useIsDesktop';
-import { distanceMiles, formatMiles, type UserPosition } from '../lib/geo';
+import useIsDesktop from '@/hooks/use-is-desktop';
+import { distanceMiles, formatMiles, type UserPosition } from '@/lib/geo';
 import type {
   Category,
   Contact,
   EditorContacts,
   Location,
   MarketSchedule,
-} from '../lib/types';
+} from '@/lib/types';
 
 const CATEGORY_LABEL: Record<Category, string> = {
   garden: 'Community Garden',

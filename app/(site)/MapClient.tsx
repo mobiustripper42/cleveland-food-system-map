@@ -2,15 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import CategoryFilter from '@/src/components/CategoryFilter';
-import SearchBar from '@/src/components/SearchBar';
-import LocationPanel from '@/src/components/LocationPanel';
-import useIsDesktop from '@/src/hooks/useIsDesktop';
-import { distanceMiles, formatMiles, type UserPosition } from '@/src/lib/geo';
-import type { Category, EditorContacts, Location } from '@/src/lib/types';
+import CategoryFilter from '@/components/map/category-filter';
+import SearchBar from '@/components/map/search-bar';
+import LocationPanel from '@/components/map/location-panel';
+import useIsDesktop from '@/hooks/use-is-desktop';
+import { distanceMiles, formatMiles, type UserPosition } from '@/lib/geo';
+import type { Category, EditorContacts, Location } from '@/lib/types';
 
 // Leaflet touches `window` at import time — client-only.
-const MapView = dynamic(() => import('@/src/components/MapView'), {
+const MapView = dynamic(() => import('@/components/map/map-view'), {
   ssr: false,
 });
 

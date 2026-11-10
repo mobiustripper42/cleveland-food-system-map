@@ -1,4 +1,4 @@
-import type { Category } from '../lib/types';
+import type { Category } from '@/lib/types';
 
 const LABELS: Record<Category, string> = {
   garden: 'Gardens',
