@@ -10,8 +10,8 @@ import {
   useMap,
   useMapEvents,
 } from 'react-leaflet';
-import type { UserPosition } from '../lib/geo';
-import type { Category, Location } from '../lib/types';
+import type { UserPosition } from '@/lib/geo';
+import type { Category, Location } from '@/lib/types';
 
 function ZoomControl() {
   const map = useMap();
