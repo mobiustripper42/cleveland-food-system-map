@@ -4,11 +4,12 @@ import { cacheLife, cacheTag } from 'next/cache';
 import { cache } from 'react';
 import { formatAddress } from '@/lib/address';
 import { getSession } from '@/lib/session';
-import { db } from './index';
+import { asUser, db } from './index';
 import {
   contacts,
   editors,
   locationContacts,
+  locationOwners,
   locations,
   marketSchedules,
   siteSections,
@@ -186,4 +187,71 @@ export async function getEditors() {
     .from(editors)
     .innerJoin(user, eq(editors.user_id, user.id))
     .orderBy(asc(user.email));
+}
+
+/**
+ * Which locations the request may edit: 'all' for editors, else the ids it
+ * owns ([] when signed out). Reads the session: never call inside 'use cache'.
+ * Hiding edit links is UX — the edit page and updateLocation check again.
+ */
+export const getEditAccess = cache(async (): Promise<'all' | string[]> => {
+  const userId = (await getSession())?.user.id;
+  if (!userId) return [];
+  if (await isEditor()) return 'all';
+  const rows = await db
+    .select({ id: locationOwners.location_id })
+    .from(locationOwners)
+    .where(eq(locationOwners.user_id, userId));
+  return rows.map((r) => r.id);
+});
+
+export async function canEditLocation(id: string): Promise<boolean> {
+  const access = await getEditAccess();
+  return access === 'all' || access.includes(id);
+}
+
+/**
+ * The full row (any status) for the edit form, or null if the caller can't
+ * edit it. Read through asUser so RLS (editor or owner) decides; owners are
+ * listed for editors only.
+ */
+export async function getLocationForEdit(id: string) {
+  const session = await getSession();
+  if (!session) return null;
+
+  const [row] = await asUser(session.user.id, (tx) =>
+    tx
+      .select({
+        id: locations.id,
+        name: locations.name,
+        category: locations.category,
+        status: locations.status,
+        lat: locations.lat,
+        lng: locations.lng,
+        street: locations.street,
+        city: locations.city,
+        state: locations.state,
+        zip: locations.zip,
+        ward: locations.ward,
+        website: locations.website,
+        notes: locations.notes,
+      })
+      .from(locations)
+      .where(eq(locations.id, id)),
+  );
+  if (!row) return null;
+
+  const editor = await isEditor();
+  // A row visible through RLS is editable: select and update policies match.
+  // `user` has no app_user grants, hence db (owner) after the editor check.
+  const owners = editor
+    ? await db
+        .select({ user_id: user.id, name: user.name, email: user.email })
+        .from(locationOwners)
+        .innerJoin(user, eq(locationOwners.user_id, user.id))
+        .where(eq(locationOwners.location_id, id))
+        .orderBy(asc(user.email))
+    : null;
+
+  return { location: row, editor, owners };
 }

@@ -9,7 +9,7 @@ import {
   type BrowseState,
   type BrowseView,
 } from '@/lib/browse';
-import type { Category, Location } from '@/lib/types';
+import type { Category, EditAccess, Location } from '@/lib/types';
 import { LocationRow, LocationTile } from './location-tile';
 
 /**
@@ -20,9 +20,12 @@ import { LocationRow, LocationTile } from './location-tile';
 export default function LocationsBrowser({
   locations,
   initial,
+  editAccess,
 }: {
   locations: Location[];
   initial: BrowseState;
+  /** Streamed; resolves per request. Shows Edit links where allowed. */
+  editAccess: EditAccess;
 }) {
   const [categories, setCategories] = useState(initial.categories);
   const [query, setQuery] = useState(initial.q);
@@ -93,13 +96,13 @@ export default function LocationsBrowser({
       ) : view === 'tiles' ? (
         <ul className="grid grid-cols-1 gap-3 px-3 pb-6 sm:grid-cols-2 lg:grid-cols-3">
           {shown.map((l) => (
-            <LocationTile key={l.id} location={l} />
+            <LocationTile key={l.id} location={l} editAccess={editAccess} />
           ))}
         </ul>
       ) : (
         <ul className="divide-y divide-neutral-200 px-3 pb-6">
           {shown.map((l) => (
-            <LocationRow key={l.id} location={l} />
+            <LocationRow key={l.id} location={l} editAccess={editAccess} />
           ))}
         </ul>
       )}

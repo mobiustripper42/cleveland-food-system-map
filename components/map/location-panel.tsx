@@ -1,9 +1,15 @@
 import { Suspense, use, useEffect, useRef } from 'react';
 import useIsDesktop from '@/hooks/use-is-desktop';
 import { distanceMiles, formatMiles, type UserPosition } from '@/lib/geo';
+import EditLink from '@/components/locations/edit-link';
 import LocationDetails from '@/components/locations/location-details';
 import { formatPhone } from '@/lib/format';
-import type { Contact, EditorContacts, Location } from '@/lib/types';
+import type {
+  Contact,
+  EditAccess,
+  EditorContacts,
+  Location,
+} from '@/lib/types';
 
 function ContactItem({ contact }: { contact: Contact }) {
   return (
@@ -74,6 +80,7 @@ function EditorSection({
 interface Props {
   location: Location | null;
   contacts: EditorContacts;
+  editAccess: EditAccess;
   userPosition: UserPosition | null;
   onClose: () => void;
 }
@@ -81,6 +88,7 @@ interface Props {
 export default function LocationPanel({
   location,
   contacts,
+  editAccess,
   userPosition,
   onClose,
 }: Props) {
@@ -173,6 +181,12 @@ export default function LocationPanel({
             )
           }
         >
+          {/* Outside EditorSection: owners can edit but aren't editors. */}
+          <EditLink
+            access={editAccess}
+            id={location.id}
+            style={{ ...styles.field, display: 'inline-block', marginTop: 12 }}
+          />
           <Suspense fallback={null}>
             <EditorSection contacts={contacts} location={location} />
           </Suspense>

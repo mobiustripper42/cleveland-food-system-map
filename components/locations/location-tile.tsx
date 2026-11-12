@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { formatScheduleShort } from '@/lib/format';
 import { CATEGORY_COLORS, CATEGORY_LABELS } from '@/lib/locations';
-import type { Location } from '@/lib/types';
+import type { EditAccess, Location } from '@/lib/types';
+import EditLink from './edit-link';
 
 const LINK = { color: '#1d4ed8' };
 
@@ -19,7 +20,13 @@ export function CategoryLabel({ location }: { location: Location }) {
 }
 
 /** Card for the tile view. The whole card is clickable via the name link. */
-export function LocationTile({ location }: { location: Location }) {
+export function LocationTile({
+  location,
+  editAccess,
+}: {
+  location: Location;
+  editAccess: EditAccess;
+}) {
   return (
     <li
       className="relative flex flex-col overflow-hidden rounded-md border border-neutral-200 bg-white border-t-4 focus-within:ring-2 focus-within:ring-[#1d4ed8]"
@@ -52,13 +59,25 @@ export function LocationTile({ location }: { location: Location }) {
             {location.schedules.map(formatScheduleShort).join(' · ')}
           </p>
         )}
+        {/* relative z-10: above the name link's full-card click overlay. */}
+        <EditLink
+          access={editAccess}
+          id={location.id}
+          className="relative z-10 self-start text-sm underline-offset-2"
+        />
       </div>
     </li>
   );
 }
 
 /** Compact row for the list view. */
-export function LocationRow({ location }: { location: Location }) {
+export function LocationRow({
+  location,
+  editAccess,
+}: {
+  location: Location;
+  editAccess: EditAccess;
+}) {
   return (
     <li className="flex flex-col gap-0.5 py-3 sm:flex-row sm:items-baseline sm:gap-4">
       <Link
@@ -74,6 +93,11 @@ export function LocationRow({ location }: { location: Location }) {
       {location.address && (
         <span className="text-sm text-neutral-600">{location.address}</span>
       )}
+      <EditLink
+        access={editAccess}
+        id={location.id}
+        className="text-sm underline-offset-2 sm:ml-auto"
+      />
     </li>
   );
 }

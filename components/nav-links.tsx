@@ -2,19 +2,20 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Suspense } from 'react';
 
 const LINKS = [
   { href: '/', label: 'Map' },
   { href: '/locations', label: 'List' },
 ];
 
-export function NavLinks() {
-  const pathname = usePathname();
+function Links({ pathname }: { pathname: string | null }) {
   return (
     <div className="flex items-center gap-3">
       {LINKS.map(({ href, label }) => {
         const current =
-          href === '/' ? pathname === '/' : pathname.startsWith(href);
+          pathname !== null &&
+          (href === '/' ? pathname === '/' : pathname.startsWith(href));
         return (
           <Link
             key={href}
@@ -32,5 +33,19 @@ export function NavLinks() {
         );
       })}
     </div>
+  );
+}
+
+function CurrentLinks() {
+  return <Links pathname={usePathname()} />;
+}
+
+// Routes with params unknown at build (/locations/[id]/edit) can't read the
+// pathname while prerendering: the fallback shows the links unhighlighted.
+export function NavLinks() {
+  return (
+    <Suspense fallback={<Links pathname={null} />}>
+      <CurrentLinks />
+    </Suspense>
   );
 }

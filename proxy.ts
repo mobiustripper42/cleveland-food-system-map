@@ -9,8 +9,11 @@ function isPublic(pathname: string) {
     pathname === '/' ||
     pathname === '/login' ||
     pathname === '/locations' ||
-    // /locations/new is editor-only: let it fall through to the session check.
-    (pathname.startsWith('/locations/') && pathname !== '/locations/new') ||
+    // /locations/new and /locations/<id>/edit need a session: let them fall
+    // through to the cookie check.
+    (pathname.startsWith('/locations/') &&
+      pathname !== '/locations/new' &&
+      !pathname.endsWith('/edit')) ||
     pathname === '/sitemap.xml' ||
     pathname === '/robots.txt' ||
     pathname.startsWith('/api/auth/')

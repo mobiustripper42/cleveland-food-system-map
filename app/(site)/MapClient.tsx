@@ -8,7 +8,12 @@ import LocationPanel from '@/components/map/location-panel';
 import useIsDesktop from '@/hooks/use-is-desktop';
 import { CATEGORIES } from '@/lib/locations';
 import { distanceMiles, formatMiles, type UserPosition } from '@/lib/geo';
-import type { Category, EditorContacts, Location } from '@/lib/types';
+import type {
+  Category,
+  EditAccess,
+  EditorContacts,
+  Location,
+} from '@/lib/types';
 
 // Leaflet touches `window` at import time — client-only.
 const MapView = dynamic(() => import('@/components/map/map-view'), {
@@ -18,9 +23,11 @@ const MapView = dynamic(() => import('@/components/map/map-view'), {
 export default function MapClient({
   locations,
   contacts,
+  editAccess,
 }: {
   locations: Location[];
   contacts: EditorContacts;
+  editAccess: EditAccess;
 }) {
   const [activeCategories, setActiveCategories] =
     useState<Category[]>(CATEGORIES);
@@ -128,6 +135,7 @@ export default function MapClient({
       <LocationPanel
         location={selectedLocation}
         contacts={contacts}
+        editAccess={editAccess}
         userPosition={userPosition}
         onClose={() => setSelectedId(null)}
       />
