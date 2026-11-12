@@ -21,7 +21,7 @@ import {
   type CreateLocationState,
   findCoordinates,
   type FindCoordinatesResult,
-} from './actions';
+} from '@/app/(site)/locations/actions';
 
 function savedMessage(s: Extract<CreateLocationState, { status: 'saved' }>) {
   const pin =

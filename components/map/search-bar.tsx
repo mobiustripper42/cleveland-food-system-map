@@ -1,14 +1,19 @@
 interface Props {
   value: string;
   onChange: (value: string) => void;
+  placeholder?: string;
 }
 
-export default function SearchBar({ value, onChange }: Props) {
+export default function SearchBar({
+  value,
+  onChange,
+  placeholder = 'Search by name or notes…',
+}: Props) {
   return (
     <div style={styles.wrap}>
       <input
         type="search"
-        placeholder="Search by name or notes…"
+        placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-label="Search locations"

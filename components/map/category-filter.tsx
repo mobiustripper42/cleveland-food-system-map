@@ -1,3 +1,4 @@
+import { CATEGORIES, CATEGORY_COLORS as ACCENT } from '@/lib/locations';
 import type { Category } from '@/lib/types';
 
 const LABELS: Record<Category, string> = {
@@ -5,14 +6,6 @@ const LABELS: Record<Category, string> = {
   farm: 'Farms',
   market: 'Markets',
 };
-
-const ACCENT: Record<Category, string> = {
-  garden: '#3a7d44',
-  farm: '#c0392b',
-  market: '#7b2d8b',
-};
-
-const CATEGORIES: Category[] = ['garden', 'farm', 'market'];
 
 interface Props {
   activeCategories: Category[];
