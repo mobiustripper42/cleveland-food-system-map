@@ -1,0 +1,362 @@
+/**
+ * Database schema — source of truth for tables, constraints, and RLS policies.
+ *
+ * TS keys are snake_case on purpose: `$inferSelect` then matches the row shape
+ * the app's client code uses, so client types derive from this file.
+ *
+ * Generate migrations with `npm run db:generate`. Functions, triggers, and
+ * grants that Drizzle can't express live in the custom migrations under drizzle/.
+ */
+import { sql } from 'drizzle-orm';
+import {
+  type AnyPgColumn,
+  check,
+  date,
+  index,
+  numeric,
+  pgEnum,
+  pgPolicy,
+  pgRole,
+  pgTable,
+  primaryKey,
+  smallint,
+  text,
+  time,
+  timestamp,
+  unique,
+} from 'drizzle-orm/pg-core';
+import { user } from './auth-schema.ts';
+
+export * from './auth-schema.ts';
+
+// Every app query runs as the DATABASE_URL owner, which bypasses RLS.
+// asUser() (index.ts) drops to this role for user-initiated writes and sets
+// app.user_id, which public.current_user_id() reads. Created in the
+// auth_prep custom migration so it works on any Postgres, not just Supabase.
+const appUser = pgRole('app_user').existing();
+const currentUserId = sql`(select public.current_user_id())`;
+
+// KSUID generated in Postgres (public.gen_ksuid, see custom migration) so
+// inserts from Drizzle, scripts, and a SQL console all get one.
+const ksuidPk = () =>
+  text('id')
+    .primaryKey()
+    .default(sql`public.gen_ksuid()`);
+
+const createdAt = () =>
+  timestamp('created_at', { withTimezone: true, mode: 'string' })
+    .notNull()
+    .defaultNow();
+
+// All four are owned by the set_audit_fields trigger (see custom migration):
+// client-supplied values are overwritten, so they can't be spoofed via the API.
+// *_by is null for writes outside asUser() (KML import, scripts, SQL console).
+const audit = {
+  created_at: createdAt(),
+  updated_at: timestamp('updated_at', { withTimezone: true, mode: 'string' })
+    .notNull()
+    .defaultNow(),
+  created_by: text('created_by').references(() => user.id, {
+    onDelete: 'set null',
+  }),
+  updated_by: text('updated_by').references(() => user.id, {
+    onDelete: 'set null',
+  }),
+};
+
+// Signed in != editor: sign-up is open (email code, password, Google, Facebook), so anyone can create a
+// session. Write access and PII require a row in `editors`.
+const isEditor = sql`exists (select 1 from public.editors where user_id = ${currentUserId})`;
+// Same check for policies on editors itself (see editors_admin migration).
+const editorFn = sql`(select public.is_editor())`;
+
+const editorWritePolicies = (table: string) => [
+  pgPolicy(`${table}_select_editor`, {
+    for: 'select',
+    to: appUser,
+    using: isEditor,
+  }),
+  pgPolicy(`${table}_insert_editor`, {
+    for: 'insert',
+    to: appUser,
+    withCheck: isEditor,
+  }),
+  pgPolicy(`${table}_update_editor`, {
+    for: 'update',
+    to: appUser,
+    using: isEditor,
+    withCheck: isEditor,
+  }),
+];
+
+// Referenced by name (not the Drizzle table) because locations is declared
+// before location_owners.
+const ownsLocation = (locationId: AnyPgColumn) =>
+  sql`exists (select 1 from public.location_owners o where o.location_id = ${locationId} and o.user_id = ${currentUserId})`;
+
+const editorDeletePolicy = (table: string) =>
+  pgPolicy(`${table}_delete_editor`, {
+    for: 'delete',
+    to: appUser,
+    using: isEditor,
+  });
+
+export const editors = pgTable.withRLS(
+  'editors',
+  {
+    user_id: text('user_id')
+      .primaryKey()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    created_at: createdAt(),
+  },
+  () => [
+    // Read-own-row; this is what lets `isEditor` resolve inside other tables'
+    // policies.
+    pgPolicy('editors_select_self', {
+      for: 'select',
+      to: appUser,
+      using: sql`user_id = ${currentUserId}`,
+    }),
+    // Editors manage editors (/admin/editors; `npm run add-editor` still works
+    // as owner). Policies here can't subquery editors (infinite recursion), so
+    // they call the security-definer public.is_editor() (editors_admin migration).
+    pgPolicy('editors_select_editor', {
+      for: 'select',
+      to: appUser,
+      using: editorFn,
+    }),
+    pgPolicy('editors_insert_editor', {
+      for: 'insert',
+      to: appUser,
+      withCheck: editorFn,
+    }),
+    // No removing yourself — so the last editor can never be removed.
+    pgPolicy('editors_delete_editor', {
+      for: 'delete',
+      to: appUser,
+      using: sql`${editorFn} and user_id <> ${currentUserId}`,
+    }),
+  ],
+);
+
+export const locationCategory = pgEnum('location_category', [
+  'garden',
+  'farm',
+  'market',
+]);
+
+// Only `published` is public. New rows default to `draft` so nothing goes
+// live by accident. `archived` replaces hard deletes.
+export const locationStatus = pgEnum('location_status', [
+  'draft',
+  'published',
+  'archived',
+]);
+
+export const locations = pgTable.withRLS(
+  'locations',
+  {
+    id: ksuidPk(),
+    name: text('name').notNull(),
+    category: locationCategory('category').notNull(),
+    status: locationStatus('status').notNull().default('draft'),
+    lat: numeric('lat', { precision: 10, scale: 7, mode: 'number' }),
+    lng: numeric('lng', { precision: 10, scale: 7, mode: 'number' }),
+    // Split address; formatAddress() (lib/address.ts) joins it for display.
+    street: text('street'),
+    city: text('city'),
+    state: text('state'),
+    zip: text('zip'),
+    ward: smallint('ward'),
+    website: text('website'),
+    notes: text('notes'),
+    // Object path relative to LOCATION_IMAGES_BASE_URL, not a URL.
+    image_path: text('image_path'),
+    ...audit,
+  },
+  (t) => [
+    // NULLS NOT DISTINCT so re-importing a market without coordinates
+    // upserts instead of inserting a duplicate.
+    unique('locations_name_lat_lng_key')
+      .on(t.name, t.lat, t.lng)
+      .nullsNotDistinct(),
+    check('locations_lat_range', sql`${t.lat} between -90 and 90`),
+    check('locations_lng_range', sql`${t.lng} between -180 and 180`),
+    check(
+      'locations_lat_lng_paired',
+      sql`(${t.lat} is null) = (${t.lng} is null)`,
+    ),
+    check('locations_ward_positive', sql`${t.ward} > 0`),
+    check('locations_state_format', sql`${t.state} ~ '^[A-Z]{2}$'`),
+    check('locations_zip_format', sql`${t.zip} ~ '^[0-9]{5}(-[0-9]{4})?$'`),
+    check(
+      'locations_image_path_relative',
+      sql`${t.image_path} !~ '^(/|[a-z]+://)'`,
+    ),
+
+    pgPolicy('locations_select_public', {
+      for: 'select',
+      to: appUser,
+      using: sql`${t.status} = 'published'`,
+    }),
+    ...editorWritePolicies('locations'),
+    // Owners (location_owners) read and edit their own rows. Status changes
+    // stay editor-only: the locations_status_editor_only trigger enforces it,
+    // since a policy can't compare old and new values.
+    pgPolicy('locations_select_owner', {
+      for: 'select',
+      to: appUser,
+      using: ownsLocation(t.id),
+    }),
+    pgPolicy('locations_update_owner', {
+      for: 'update',
+      to: appUser,
+      using: ownsLocation(t.id),
+      withCheck: ownsLocation(t.id),
+    }),
+    // No delete policy: set status = 'archived' instead.
+  ],
+);
+
+// Users who may edit one location's content without being editors (e.g. a
+// garden's manager). Managed by editors on /locations/[id]/edit.
+export const locationOwners = pgTable.withRLS(
+  'location_owners',
+  {
+    location_id: text('location_id')
+      .notNull()
+      .references(() => locations.id, { onDelete: 'cascade' }),
+    user_id: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    created_at: createdAt(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.location_id, t.user_id] }),
+    index('location_owners_user_id_idx').on(t.user_id),
+    // Own rows: what lets ownsLocation resolve inside locations' policies.
+    pgPolicy('location_owners_select_self', {
+      for: 'select',
+      to: appUser,
+      using: sql`${t.user_id} = ${currentUserId}`,
+    }),
+    pgPolicy('location_owners_select_editor', {
+      for: 'select',
+      to: appUser,
+      using: isEditor,
+    }),
+    pgPolicy('location_owners_insert_editor', {
+      for: 'insert',
+      to: appUser,
+      withCheck: isEditor,
+    }),
+    editorDeletePolicy('location_owners'),
+  ],
+);
+
+// Open hours for markets/farm stands. One row per weekday per season; a
+// market open Wed + Sat has two rows. Times are Cleveland local time.
+export const marketSchedules = pgTable.withRLS(
+  'market_schedules',
+  {
+    id: ksuidPk(),
+    location_id: text('location_id')
+      .notNull()
+      .references(() => locations.id, { onDelete: 'cascade' }),
+    // 0 = Sunday … 6 = Saturday, matching JS getDay() and Postgres dow.
+    day_of_week: smallint('day_of_week').notNull(),
+    opens_at: time('opens_at').notNull(),
+    closes_at: time('closes_at').notNull(),
+    // Both null = year-round.
+    season_start: date('season_start', { mode: 'string' }),
+    season_end: date('season_end', { mode: 'string' }),
+    notes: text('notes'),
+    ...audit,
+  },
+  (t) => [
+    index('market_schedules_location_id_idx').on(t.location_id),
+    check(
+      'market_schedules_day_of_week_range',
+      sql`${t.day_of_week} between 0 and 6`,
+    ),
+    check('market_schedules_hours_order', sql`${t.closes_at} > ${t.opens_at}`),
+    check(
+      'market_schedules_season_paired',
+      sql`(${t.season_start} is null) = (${t.season_end} is null)`,
+    ),
+    check(
+      'market_schedules_season_order',
+      sql`${t.season_end} >= ${t.season_start}`,
+    ),
+
+    // Visible exactly when the parent location is (RLS on locations applies
+    // inside the subquery).
+    pgPolicy('market_schedules_select_public', {
+      for: 'select',
+      to: appUser,
+      using: sql`exists (select 1 from public.locations l where l.id = ${t.location_id})`,
+    }),
+    ...editorWritePolicies('market_schedules'),
+    editorDeletePolicy('market_schedules'),
+  ],
+);
+
+// Manager PII. Editors only — getEditorContacts() applies the same rule for
+// the owner-role reads that bypass RLS.
+export const contacts = pgTable.withRLS(
+  'contacts',
+  {
+    id: ksuidPk(),
+    name: text('name'),
+    phone: text('phone'),
+    email: text('email'),
+    ...audit,
+  },
+  (t) => [
+    // Same person manages several sites in the source data; dedupe on email.
+    unique('contacts_email_key').on(t.email),
+    ...editorWritePolicies('contacts'),
+    editorDeletePolicy('contacts'),
+  ],
+);
+
+// Editor-managed HTML for fixed page slots (top, footer). Keys are defined in
+// code (SECTION_KEYS in lib/sections.ts) and seeded by migration. HTML is
+// sanitized on save and again on render.
+export const siteSections = pgTable.withRLS(
+  'site_sections',
+  {
+    key: text('key').primaryKey(),
+    html: text('html').notNull().default(''),
+    ...audit,
+  },
+  (t) => [
+    check('site_sections_key_format', sql`${t.key} ~ '^[a-z][a-z0-9_-]*$'`),
+    pgPolicy('site_sections_select_public', {
+      for: 'select',
+      to: appUser,
+      using: sql`true`,
+    }),
+    ...editorWritePolicies('site_sections'),
+    // No delete policy: empty html hides a section.
+  ],
+);
+
+export const locationContacts = pgTable.withRLS(
+  'location_contacts',
+  {
+    location_id: text('location_id')
+      .notNull()
+      .references(() => locations.id, { onDelete: 'cascade' }),
+    contact_id: text('contact_id')
+      .notNull()
+      .references(() => contacts.id, { onDelete: 'cascade' }),
+    created_at: createdAt(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.location_id, t.contact_id] }),
+    index('location_contacts_contact_id_idx').on(t.contact_id),
+    ...editorWritePolicies('location_contacts'),
+    editorDeletePolicy('location_contacts'),
+  ],
+);
