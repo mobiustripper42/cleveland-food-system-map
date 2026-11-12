@@ -8,6 +8,11 @@ function isPublic(pathname: string) {
   return (
     pathname === '/' ||
     pathname === '/login' ||
+    pathname === '/locations' ||
+    // /locations/new is editor-only: let it fall through to the session check.
+    (pathname.startsWith('/locations/') && pathname !== '/locations/new') ||
+    pathname === '/sitemap.xml' ||
+    pathname === '/robots.txt' ||
     pathname.startsWith('/api/auth/')
   );
 }

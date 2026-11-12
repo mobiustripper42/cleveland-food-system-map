@@ -1,16 +1,10 @@
 import type { Metadata } from 'next';
 import { Geist } from 'next/font/google';
+import { SITE_URL } from '@/lib/site-url';
 import './globals.css';
 
-// Production resolves to the primary domain; previews to their deploy URL.
-const host =
-  process.env.VERCEL_ENV === 'production'
-    ? process.env.VERCEL_PROJECT_PRODUCTION_URL
-    : process.env.VERCEL_URL;
-const defaultUrl = host ? `https://${host}` : 'http://localhost:3000';
-
 export const metadata: Metadata = {
-  metadataBase: new URL(defaultUrl),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: 'Cleveland Food System Map',
     template: '%s · Cleveland Food System Map',

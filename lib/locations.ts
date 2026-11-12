@@ -16,6 +16,15 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   market: 'Farmers Market / Farm Stand',
 };
 
+/** Pin/accent color per category (see CLAUDE.md design rules). */
+export const CATEGORY_COLORS: Record<Category, string> = {
+  garden: '#3a7d44',
+  farm: '#c0392b',
+  market: '#7b2d8b',
+};
+
+export const CATEGORIES = Object.keys(CATEGORY_LABELS) as Category[];
+
 export const STATUS_LABELS: Record<LocationStatus, string> = {
   draft: 'Draft — hidden from the map',
   published: 'Published — on the map',

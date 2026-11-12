@@ -6,6 +6,7 @@ import CategoryFilter from '@/components/map/category-filter';
 import SearchBar from '@/components/map/search-bar';
 import LocationPanel from '@/components/map/location-panel';
 import useIsDesktop from '@/hooks/use-is-desktop';
+import { CATEGORIES } from '@/lib/locations';
 import { distanceMiles, formatMiles, type UserPosition } from '@/lib/geo';
 import type { Category, EditorContacts, Location } from '@/lib/types';
 
@@ -13,8 +14,6 @@ import type { Category, EditorContacts, Location } from '@/lib/types';
 const MapView = dynamic(() => import('@/components/map/map-view'), {
   ssr: false,
 });
-
-const ALL_CATEGORIES: Category[] = ['garden', 'farm', 'market'];
 
 export default function MapClient({
   locations,
@@ -24,7 +23,7 @@ export default function MapClient({
   contacts: EditorContacts;
 }) {
   const [activeCategories, setActiveCategories] =
-    useState<Category[]>(ALL_CATEGORIES);
+    useState<Category[]>(CATEGORIES);
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   // Store the id, not the object, so the panel shows fresh server data after
@@ -33,6 +32,13 @@ export default function MapClient({
   const selectedLocation = locations.find((l) => l.id === selectedId) ?? null;
   const [userPosition, setUserPosition] = useState<UserPosition | null>(null);
   const isDesktop = useIsDesktop();
+
+  // Deep link from /locations/[id] ("View on map"). Read on the client so the
+  // home page stays cached instead of becoming request-dynamic.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('location');
+    if (id && locations.some((l) => l.id === id)) setSelectedId(id);
+  }, [locations]);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(query), 200);

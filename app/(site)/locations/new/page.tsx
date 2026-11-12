@@ -3,7 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import { Suspense } from 'react';
 import { isEditor } from '@/lib/db/queries';
 import { getSession } from '@/lib/session';
-import { LocationForm } from './LocationForm';
+import { LocationForm } from '@/components/locations/location-form';
 
 export const metadata = { title: 'Add location' };
 
@@ -12,11 +12,11 @@ export default function NewLocationPage() {
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4 md:p-10">
       <div>
         <Link
-          href="/admin"
+          href="/locations"
           className="text-sm underline underline-offset-4"
           style={{ color: '#1d4ed8' }}
         >
-          ← Admin
+          ← All locations
         </Link>
       </div>
       <h1 className="text-2xl font-semibold">Add location</h1>

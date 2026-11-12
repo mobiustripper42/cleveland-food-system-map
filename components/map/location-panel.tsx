@@ -1,74 +1,9 @@
 import { Suspense, use, useEffect, useRef } from 'react';
 import useIsDesktop from '@/hooks/use-is-desktop';
 import { distanceMiles, formatMiles, type UserPosition } from '@/lib/geo';
-import type {
-  Category,
-  Contact,
-  EditorContacts,
-  Location,
-  MarketSchedule,
-} from '@/lib/types';
-
-const CATEGORY_LABEL: Record<Category, string> = {
-  garden: 'Community Garden',
-  farm: 'Urban Farm',
-  market: 'Farmers Market / Farm Stand',
-};
-
-const CATEGORY_COLOR: Record<Category, string> = {
-  garden: '#3a7d44',
-  farm: '#c0392b',
-  market: '#7b2d8b',
-};
-
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-// 'HH:MM:SS' → '8 AM' / '12:30 PM'
-function formatTime(t: string): string {
-  const [h, m] = t.split(':').map(Number);
-  const suffix = h < 12 ? 'AM' : 'PM';
-  const hour = h % 12 || 12;
-  return m
-    ? `${hour}:${String(m).padStart(2, '0')} ${suffix}`
-    : `${hour} ${suffix}`;
-}
-
-// 'YYYY-MM-DD' → 'Jun 7'. UTC so the date doesn't shift with the viewer's zone.
-function formatDate(d: string): string {
-  return new Date(`${d}T00:00:00Z`).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    timeZone: 'UTC',
-  });
-}
-
-// Google Maps' cross-platform URL: opens the app on phones, the site elsewhere.
-// Coordinates are exact; fall back to the address for markets without them.
-function directionsUrl(location: Location): string | null {
-  const destination =
-    location.lat !== null && location.lng !== null
-      ? `${location.lat},${location.lng}`
-      : location.address;
-  if (!destination) return null;
-  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
-}
-
-function formatSchedule(s: MarketSchedule): string {
-  const hours = `${DAYS[s.day_of_week]} ${formatTime(s.opens_at)}–${formatTime(s.closes_at)}`;
-  const season =
-    s.season_start && s.season_end
-      ? ` (${formatDate(s.season_start)} – ${formatDate(s.season_end)})`
-      : '';
-  return hours + season + (s.notes ? ` · ${s.notes}` : '');
-}
-
-// Import stores '2162834400' or '2162834400 x2705'.
-function formatPhone(phone: string): string {
-  const [digits, ext] = phone.split(' x');
-  const m = digits.match(/^(\d{3})(\d{3})(\d{4})$/);
-  const base = m ? `(${m[1]}) ${m[2]}-${m[3]}` : digits;
-  return ext ? `${base} ext. ${ext}` : base;
-}
+import LocationDetails from '@/components/locations/location-details';
+import { formatPhone } from '@/lib/format';
+import type { Contact, EditorContacts, Location } from '@/lib/types';
 
 function ContactItem({ contact }: { contact: Contact }) {
   return (
@@ -172,8 +107,6 @@ export default function LocationPanel({
 
   if (!location) return null;
 
-  const color = CATEGORY_COLOR[location.category];
-  const directions = directionsUrl(location);
   const distance =
     userPosition && location.lat !== null && location.lng !== null
       ? distanceMiles(userPosition, { lat: location.lat, lng: location.lng })
@@ -230,94 +163,20 @@ export default function LocationPanel({
           ×
         </button>
 
-        {location.image_url && (
-          <img
-            src={location.image_url}
-            alt={location.name}
-            style={styles.image}
-          />
-        )}
-
-        <div style={styles.body}>
-          <span style={{ ...styles.tag, backgroundColor: color }}>
-            {CATEGORY_LABEL[location.category]}
-          </span>
-
-          <h2 style={styles.name}>{location.name}</h2>
-
-          {distance !== null && (
-            <p style={styles.field}>
-              {formatMiles(distance)} away (straight line)
-            </p>
-          )}
-
-          {directions && (
-            <p style={styles.field}>
-              <a
-                href={directions}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={styles.link}
-              >
-                {location.address ?? 'Get directions'}
-              </a>
-            </p>
-          )}
-
-          {location.website && (
-            <p style={styles.field}>
-              <a
-                href={location.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={styles.link}
-              >
-                Website
-              </a>
-            </p>
-          )}
-
-          {location.schedules.length > 0 && (
-            <ul style={{ ...styles.list, marginTop: 12 }} aria-label="Hours">
-              {location.schedules.map((s) => (
-                <li key={s.id} style={styles.field}>
-                  {formatSchedule(s)}
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {location.website && (
-            <p style={styles.field}>
-              <a
-                href={location.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={styles.link}
-              >
-                Website
-              </a>
-            </p>
-          )}
-
-          {location.schedules.length > 0 && (
-            <ul style={{ ...styles.list, marginTop: 12 }} aria-label="Hours">
-              {location.schedules.map((s) => (
-                <li key={s.id} style={styles.field}>
-                  {formatSchedule(s)}
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {location.notes && (
-            <p style={{ ...styles.field, marginTop: 12 }}>{location.notes}</p>
-          )}
-
+        <LocationDetails
+          location={location}
+          meta={
+            distance !== null && (
+              <p style={styles.field}>
+                {formatMiles(distance)} away (straight line)
+              </p>
+            )
+          }
+        >
           <Suspense fallback={null}>
             <EditorSection contacts={contacts} location={location} />
           </Suspense>
-        </div>
+        </LocationDetails>
       </div>
     </>
   );
@@ -336,33 +195,6 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#6b6375',
     padding: '0 4px',
     zIndex: 1,
-  },
-  image: {
-    width: '100%',
-    maxHeight: 180,
-    objectFit: 'cover',
-    display: 'block',
-  },
-  body: {
-    padding: '14px 16px 20px',
-  },
-  tag: {
-    display: 'inline-block',
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: 600,
-    letterSpacing: '0.5px',
-    textTransform: 'uppercase',
-    padding: '3px 8px',
-    borderRadius: 4,
-    marginBottom: 8,
-  },
-  name: {
-    margin: '0 0 8px',
-    fontSize: 18,
-    fontWeight: 600,
-    color: '#08060d',
-    paddingRight: 24,
   },
   field: {
     margin: '4px 0',
