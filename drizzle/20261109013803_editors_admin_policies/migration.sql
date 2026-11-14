@@ -1,0 +1,3 @@
+CREATE POLICY "editors_select_editor" ON "editors" AS PERMISSIVE FOR SELECT TO "app_user" USING ((select public.is_editor()));--> statement-breakpoint
+CREATE POLICY "editors_insert_editor" ON "editors" AS PERMISSIVE FOR INSERT TO "app_user" WITH CHECK ((select public.is_editor()));--> statement-breakpoint
+CREATE POLICY "editors_delete_editor" ON "editors" AS PERMISSIVE FOR DELETE TO "app_user" USING ((select public.is_editor()) and user_id <> (select public.current_user_id()));
