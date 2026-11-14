@@ -48,7 +48,8 @@ function writeError(err: unknown): ErrorState {
   if (code === '23505' && constraint === 'locations_name_lat_lng_key') {
     return {
       status: 'error',
-      message: 'A location with this name and coordinates already exists.',
+      message:
+        'A location with this name and coordinates already exists — if it was archived, restore it from the list instead.',
       errors: { name: 'Already used at these coordinates.' },
     };
   }
