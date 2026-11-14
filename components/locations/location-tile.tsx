@@ -6,6 +6,20 @@ import EditLink from './edit-link';
 
 const LINK = { color: '#1d4ed8' };
 
+/** Non-published rows have no public page; their name opens the editor. */
+const href = (l: Location) =>
+  l.status === 'published' ? `/locations/${l.id}` : `/locations/${l.id}/edit`;
+
+/** "Draft" / "Archived" tag; nothing for published. Neutral, no color cue. */
+export function StatusBadge({ location }: { location: Location }) {
+  if (location.status === 'published') return null;
+  return (
+    <span className="inline-block rounded border border-neutral-400 px-1.5 text-xs font-medium text-neutral-800">
+      {location.status === 'draft' ? 'Draft' : 'Archived'}
+    </span>
+  );
+}
+
 export function CategoryLabel({ location }: { location: Location }) {
   return (
     <span className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-600">
@@ -41,10 +55,13 @@ export function LocationTile({
         />
       )}
       <div className="flex flex-col gap-1.5 p-3">
-        <CategoryLabel location={location} />
+        <span className="flex items-center gap-2">
+          <CategoryLabel location={location} />
+          <StatusBadge location={location} />
+        </span>
         <h2 className="text-base font-semibold leading-snug">
           <Link
-            href={`/locations/${location.id}`}
+            href={href(location)}
             className="underline underline-offset-2 outline-none after:absolute after:inset-0"
             style={LINK}
           >
@@ -81,14 +98,15 @@ export function LocationRow({
   return (
     <li className="flex flex-col gap-0.5 py-3 sm:flex-row sm:items-baseline sm:gap-4">
       <Link
-        href={`/locations/${location.id}`}
+        href={href(location)}
         className="font-medium underline underline-offset-2 sm:w-1/3 sm:shrink-0"
         style={LINK}
       >
         {location.name}
       </Link>
-      <span className="sm:w-56 sm:shrink-0">
+      <span className="flex items-center gap-2 sm:w-56 sm:shrink-0">
         <CategoryLabel location={location} />
+        <StatusBadge location={location} />
       </span>
       {location.address && (
         <span className="text-sm text-neutral-600">{location.address}</span>

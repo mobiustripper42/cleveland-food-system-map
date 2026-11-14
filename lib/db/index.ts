@@ -19,7 +19,7 @@ const client = (globalForDb.pgClient ??= postgres(process.env.DATABASE_URL!, {
 
 export const db = drizzle({ client });
 
-type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+export type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 /**
  * Runs `fn` in a transaction as the `app_user` role with `app.user_id` set, so

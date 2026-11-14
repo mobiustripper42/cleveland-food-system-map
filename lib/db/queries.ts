@@ -1,10 +1,10 @@
 import 'server-only';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, ne, type SQL } from 'drizzle-orm';
 import { cacheLife, cacheTag } from 'next/cache';
 import { cache } from 'react';
 import { formatAddress } from '@/lib/address';
 import { getSession } from '@/lib/session';
-import { asUser, db } from './index';
+import { asUser, db, type Tx } from './index';
 import {
   contacts,
   editors,
@@ -30,47 +30,47 @@ function locationImageUrl(path: string): string {
 /** Expire with updateTag() after any write that changes the public map. */
 export const LOCATIONS_TAG = 'locations';
 
-/** Public map data: published locations + schedules, no audit or PII columns. */
-export async function getPublishedLocations() {
-  'use cache';
-  cacheLife('minutes');
-  cacheTag(LOCATIONS_TAG);
+// Columns shared by the public and managed lists: no audit or PII columns.
+const locationColumns = {
+  id: locations.id,
+  name: locations.name,
+  category: locations.category,
+  status: locations.status,
+  lat: locations.lat,
+  lng: locations.lng,
+  street: locations.street,
+  city: locations.city,
+  state: locations.state,
+  zip: locations.zip,
+  website: locations.website,
+  notes: locations.notes,
+  image_path: locations.image_path,
+};
 
-  const published = eq(locations.status, 'published');
+const scheduleColumns = {
+  id: marketSchedules.id,
+  location_id: marketSchedules.location_id,
+  day_of_week: marketSchedules.day_of_week,
+  opens_at: marketSchedules.opens_at,
+  closes_at: marketSchedules.closes_at,
+  season_start: marketSchedules.season_start,
+  season_end: marketSchedules.season_end,
+  notes: marketSchedules.notes,
+};
 
+/** Selects locations + their schedules matching `where`, shaped for the UI. */
+async function selectLocations(q: Tx | typeof db, where: SQL) {
   const [rows, schedules] = await Promise.all([
-    db
-      .select({
-        id: locations.id,
-        name: locations.name,
-        category: locations.category,
-        lat: locations.lat,
-        lng: locations.lng,
-        street: locations.street,
-        city: locations.city,
-        state: locations.state,
-        zip: locations.zip,
-        website: locations.website,
-        notes: locations.notes,
-        image_path: locations.image_path,
-      })
+    q
+      .select(locationColumns)
       .from(locations)
-      .where(published)
+      .where(where)
       .orderBy(asc(locations.name)),
-    db
-      .select({
-        id: marketSchedules.id,
-        location_id: marketSchedules.location_id,
-        day_of_week: marketSchedules.day_of_week,
-        opens_at: marketSchedules.opens_at,
-        closes_at: marketSchedules.closes_at,
-        season_start: marketSchedules.season_start,
-        season_end: marketSchedules.season_end,
-        notes: marketSchedules.notes,
-      })
+    q
+      .select(scheduleColumns)
       .from(marketSchedules)
       .innerJoin(locations, eq(marketSchedules.location_id, locations.id))
-      .where(published)
+      .where(where)
       .orderBy(asc(marketSchedules.day_of_week), asc(marketSchedules.opens_at)),
   ]);
 
@@ -80,6 +80,27 @@ export async function getPublishedLocations() {
     image_url: image_path ? locationImageUrl(image_path) : null,
     schedules: schedules.filter((s) => s.location_id === loc.id),
   }));
+}
+
+/** Public map data: published locations + schedules, no audit or PII columns. */
+export async function getPublishedLocations() {
+  'use cache';
+  cacheLife('minutes');
+  cacheTag(LOCATIONS_TAG);
+  return selectLocations(db, eq(locations.status, 'published'));
+}
+
+/**
+ * Draft and archived locations the request may edit — all of them for
+ * editors, their own for owners, [] when signed out. Read through asUser so
+ * RLS decides. Reads the session: never call inside 'use cache'.
+ */
+export async function getManagedLocations() {
+  const userId = (await getSession())?.user.id;
+  if (!userId) return [];
+  return asUser(userId, (tx) =>
+    selectLocations(tx, ne(locations.status, 'published')),
+  );
 }
 
 /** Expire with updateTag() after saving a site section. */
