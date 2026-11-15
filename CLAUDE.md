@@ -38,7 +38,7 @@ Lightweight admin UI for 2–5 authorized editors.
 ├── app/                  # Next.js App Router routes
 │   ├── layout.tsx        # Root layout + site metadata; icon.svg = favicon
 │   ├── (site)/           # Home `/`: layout.tsx = nav + top/footer site sections; page.tsx (server, Drizzle) → MapClient.tsx ('use client'). `/map` 308s here; `/?location=<id>` opens that panel
-│   │   └── locations/    # Public browse: page.tsx (tiles/list, category + name filter, URL state via lib/browse.ts); [id]/ = per-location page (prerendered, metadata, JSON-LD); [id]/edit/ = edit page (editors + that location's owners; editors also manage owners there); new/ = editor-only create (button on the list), actions.ts = location server actions (asUser)
+│   │   └── locations/    # Public browse: page.tsx (tiles/list, category + name filter, URL state via lib/browse.ts); [id]/ = per-location page (prerendered, metadata, JSON-LD); [id]/edit/ = edit page (editors + that location's owners; editors also manage owners there); new/ = editor-only create (button on the list), actions.ts = location server actions (asUser), file-actions.ts = upload/remove files
 │   ├── sitemap.ts, robots.ts # / + /locations + every published /locations/<id>
 │   ├── admin/            # Editors only: index of admin tools; sections/ (site_sections HTML), editors/ (add/remove editors) — server actions via asUser
 │   ├── login/            # Sign-in / sign-up page (email code default, passkey, password, Google, Facebook)
@@ -46,7 +46,7 @@ Lightweight admin UI for 2–5 authorized editors.
 │   └── api/auth/[...all]/ # BetterAuth handler (all auth endpoints)
 ├── components/           # shadcn components + login form, auth/logout buttons, nav-links
 │   ├── map/              # map-view (Leaflet), location-panel, category-filter, search-bar — client-only, via MapClient
-│   └── locations/        # location-details (shared by map panel + detail page, no hooks), location-tile (tile/row), locations-browser, location-fields (inputs shared by create + edit), location-form (create), location-edit-form (edit + owners), edit-link (streams per-request edit access)
+│   └── locations/        # location-details (shared by map panel + detail page, no hooks), location-tile (tile/row), locations-browser, location-fields (inputs shared by create + edit), location-form (create), location-edit-form (edit + owners), profile-image-field (browser-scaled upload to R2), edit-link (streams per-request edit access)
 ├── hooks/                # use-is-desktop (SSR-safe)
 ├── lib/
 │   ├── types.ts          # Shared TypeScript types (derived from Drizzle schema/queries)
@@ -59,6 +59,8 @@ Lightweight admin UI for 2–5 authorized editors.
 │   ├── site-url.ts       # SITE_URL (absolute origin from Vercel env) — metadataBase, sitemap, robots
 │   ├── address.ts        # street/city/state/zip helpers: formatAddress, parseOneLineAddress (client/server/scripts)
 │   ├── geocode.ts        # US Census geocoder (free, no key) + Cleveland bbox check — form lookup + import-kml
+│   ├── files.ts          # location file types, scaling/size limits, R2 key prefix (client + server)
+│   ├── r2.ts             # Cloudflare R2 (aws4fetch, server-only): presigned PUT, HEAD, list, delete, prefix sweep
 │   ├── auth.ts           # BetterAuth server config (server-only)
 │   ├── auth-client.ts    # BetterAuth React client, for 'use client' code
 │   ├── session.ts        # getSession() — the one way server code reads the session
@@ -85,10 +87,11 @@ Source of truth: `lib/db/schema.ts` (Drizzle). Migrations in `drizzle/` — `npm
 
 | Table                                                   | Purpose                                                                                                                             |
 | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `locations`                                             | Public site data. `status` enum `draft \| published \| archived` (default `draft`). Address split into `street/city/state/zip`; `image_path` = bucket path |
+| `locations`                                             | Public site data. `status` enum `draft \| published \| archived` (default `draft`). Address split into `street/city/state/zip` |
 | `market_schedules`                                      | Weekday + open/close time + optional season dates, per location                                                                     |
 | `contacts`                                              | Manager name/phone/email — PII, editors only                                                                                        |
 | `location_contacts`                                     | locations ↔ contacts (many-to-many)                                                                                                 |
+| `location_files`                                        | Files in R2 per location: `type` enum (`profile` only, one per location), `path`/`thumb_path` = R2 keys. Editors + owners insert/delete |
 | `location_owners`                                       | locations ↔ BetterAuth `user` — non-editors who may edit that location's content (not status). Managed on `/locations/<id>/edit`    |
 | `site_sections`                                         | Editor HTML per page slot (`key` PK: `top`, `footer`). Public read; sanitized on save and render. No delete — empty hides           |
 | `editors`                                               | Allowlist of BetterAuth `user` ids — managed at `/admin/editors` or `npm run add-editor -- <email>`                                 |
@@ -121,7 +124,8 @@ RLS (portable — no Supabase roles or `auth.uid()`):
 Never commit secrets. All env vars in Vercel dashboard and `.env.local` locally.
 
 See `.env.example`: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GOOGLE_CLIENT_ID/SECRET`,
-`FACEBOOK_CLIENT_ID/SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`, `LOCATION_IMAGES_BASE_URL`.
+`FACEBOOK_CLIENT_ID/SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`,
+`R2_BUCKET`, `R2_PUBLIC_BASE_URL`.
 No `NEXT_PUBLIC_*` vars — nothing client-side needs config.
 
 `.env.local` is gitignored. `.env.example` is committed with empty values.
@@ -175,16 +179,20 @@ No `NEXT_PUBLIC_*` vars — nothing client-side needs config.
 - KML import script lives in `scripts/import-kml.ts` — upserts on name + lat + lng; one-line KML addresses split via `parseOneLineAddress`
 - Address is stored split (`street`, `city`, `state`, `zip`); public queries join it into one `address` string with `formatAddress`
 - Geocoding: `lib/geocode.ts` (Census, US only, misses bare place names). Admin form looks it up on demand and on save when coordinates are blank — editor-gated so we're not an open geocoding proxy
-- Single hero image per location stored in Supabase Storage bucket `location-images`
-- Storage object path stored as `image_path`; public URL built server-side in `lib/db/queries.ts`
+- Files live in Cloudflare R2 bucket `food-system-map`, rows in `location_files` with a `type` that says where
+  the UI uses them. Only `profile` (the hero image) so far — add types with the features that use them
+- R2 keys: `locations/<location_id>/<type>/<uuid>.<ext>` (server-generated, never reused, cached immutable).
+  Public URL = `R2_PUBLIC_BASE_URL` + key, built server-side in `lib/db/queries.ts` (`image_url`, `thumb_url`)
 - Read data via Drizzle on the server (`lib/db`), not supabase-js. `DATABASE_URL` bypasses RLS —
   public queries must filter `status = 'published'` and select no PII/audit columns themselves;
   contact queries must check editor membership (`getEditorContacts()`)
 - User-initiated writes go through `asUser(session.user.id, tx => …)` (`lib/db/index.ts`): runs as `app_user`
   with `app.user_id` set, so RLS enforces editor membership and the audit trigger records `*_by`.
   After writes that change the public map, `updateTag(LOCATIONS_TAG)`
-- Photos: display only for now — `image_url` = `LOCATION_IMAGES_BASE_URL` + `image_path`. Upload was removed
-  with Supabase Auth; it returns on Cloudflare R2 (server-checked presigned uploads)
+- Uploads: the browser scales (≤1600px + ≤480px thumb, WebP else JPEG), gets presigned PUTs from
+  `startProfileUpload`, PUTs straight to R2, then `finishProfileUpload` HEAD-checks the objects and swaps the
+  row. Old objects are removed by `sweepPrefix` after commit (it also clears abandoned uploads older than 15 min).
+  Never delete a `location_files` row without sweeping its prefix
 - Unauthenticated access: `proxy.ts` is default-deny; public routes are allowlisted there
 
 ---
@@ -275,7 +283,8 @@ No `NEXT_PUBLIC_*` vars — nothing client-side needs config.
 - [x] Add location form (#29) — `/locations/new`, editor-only "New location" button on `/locations` (old `/admin/locations/new` 308s)
 - [x] Edit location form (#30) — `/locations/[id]/edit`, Edit links on list tiles/rows + map panel; per-location owners
 - [x] Archive / restore location (#31) — status filter on `/locations` for editors/owners (`getManagedLocations`, via RLS); status changes in the edit form
-- [ ] Image upload (#32) — removed in the BetterAuth switch; redo on Cloudflare R2
+- [x] Image upload (#32) — profile image on Cloudflare R2 (`location_files`, browser-scaled, presigned PUT)
+- [ ] R2 custom domain (e.g. files.clevelandfoodsystem.land) instead of the r2.dev URL — env change only
 - [ ] Form validation — client and Supabase (#33)
 - [ ] Mobile-first admin layout (#34)
 

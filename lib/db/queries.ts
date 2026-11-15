@@ -3,12 +3,14 @@ import { and, asc, eq, ne, type SQL } from 'drizzle-orm';
 import { cacheLife, cacheTag } from 'next/cache';
 import { cache } from 'react';
 import { formatAddress } from '@/lib/address';
+import { publicFileUrl } from '@/lib/r2';
 import { getSession } from '@/lib/session';
 import { asUser, db, type Tx } from './index';
 import {
   contacts,
   editors,
   locationContacts,
+  locationFiles,
   locationOwners,
   locations,
   marketSchedules,
@@ -21,11 +23,6 @@ import {
   SECTION_KEYS,
   type SectionKey,
 } from '@/lib/sections';
-
-// Public bucket base URL (Supabase Storage today, R2 later); no client needed.
-function locationImageUrl(path: string): string {
-  return `${process.env.LOCATION_IMAGES_BASE_URL}/${path}`;
-}
 
 /** Expire with updateTag() after any write that changes the public map. */
 export const LOCATIONS_TAG = 'locations';
@@ -44,7 +41,6 @@ const locationColumns = {
   zip: locations.zip,
   website: locations.website,
   notes: locations.notes,
-  image_path: locations.image_path,
 };
 
 const scheduleColumns = {
@@ -58,9 +54,27 @@ const scheduleColumns = {
   notes: marketSchedules.notes,
 };
 
-/** Selects locations + their schedules matching `where`, shaped for the UI. */
+const profileColumns = {
+  location_id: locationFiles.location_id,
+  path: locationFiles.path,
+  thumb_path: locationFiles.thumb_path,
+  width: locationFiles.width,
+  height: locationFiles.height,
+};
+
+/** Public URLs for a profile row (thumb falls back to the full image). */
+function profileUrls(
+  p: { path: string; thumb_path: string | null } | undefined,
+) {
+  return {
+    image_url: p ? publicFileUrl(p.path) : null,
+    thumb_url: p ? publicFileUrl(p.thumb_path ?? p.path) : null,
+  };
+}
+
+/** Selects locations + schedules + profile image matching `where`, shaped for the UI. */
 async function selectLocations(q: Tx | typeof db, where: SQL) {
-  const [rows, schedules] = await Promise.all([
+  const [rows, schedules, profiles] = await Promise.all([
     q
       .select(locationColumns)
       .from(locations)
@@ -72,12 +86,18 @@ async function selectLocations(q: Tx | typeof db, where: SQL) {
       .innerJoin(locations, eq(marketSchedules.location_id, locations.id))
       .where(where)
       .orderBy(asc(marketSchedules.day_of_week), asc(marketSchedules.opens_at)),
+    q
+      .select(profileColumns)
+      .from(locationFiles)
+      .innerJoin(locations, eq(locationFiles.location_id, locations.id))
+      .where(and(where, eq(locationFiles.type, 'profile'))),
   ]);
 
-  return rows.map(({ image_path, street, city, state, zip, ...loc }) => ({
+  const profileBy = new Map(profiles.map((p) => [p.location_id, p]));
+  return rows.map(({ street, city, state, zip, ...loc }) => ({
     ...loc,
     address: formatAddress({ street, city, state, zip }),
-    image_url: image_path ? locationImageUrl(image_path) : null,
+    ...profileUrls(profileBy.get(loc.id)),
     schedules: schedules.filter((s) => s.location_id === loc.id),
   }));
 }
@@ -240,25 +260,36 @@ export async function getLocationForEdit(id: string) {
   const session = await getSession();
   if (!session) return null;
 
-  const [row] = await asUser(session.user.id, (tx) =>
-    tx
-      .select({
-        id: locations.id,
-        name: locations.name,
-        category: locations.category,
-        status: locations.status,
-        lat: locations.lat,
-        lng: locations.lng,
-        street: locations.street,
-        city: locations.city,
-        state: locations.state,
-        zip: locations.zip,
-        ward: locations.ward,
-        website: locations.website,
-        notes: locations.notes,
-      })
-      .from(locations)
-      .where(eq(locations.id, id)),
+  const [[row], [profile]] = await asUser(session.user.id, (tx) =>
+    Promise.all([
+      tx
+        .select({
+          id: locations.id,
+          name: locations.name,
+          category: locations.category,
+          status: locations.status,
+          lat: locations.lat,
+          lng: locations.lng,
+          street: locations.street,
+          city: locations.city,
+          state: locations.state,
+          zip: locations.zip,
+          ward: locations.ward,
+          website: locations.website,
+          notes: locations.notes,
+        })
+        .from(locations)
+        .where(eq(locations.id, id)),
+      tx
+        .select(profileColumns)
+        .from(locationFiles)
+        .where(
+          and(
+            eq(locationFiles.location_id, id),
+            eq(locationFiles.type, 'profile'),
+          ),
+        ),
+    ]),
   );
   if (!row) return null;
 
@@ -274,5 +305,8 @@ export async function getLocationForEdit(id: string) {
         .orderBy(asc(user.email))
     : null;
 
-  return { location: row, editor, owners };
+  const image = profile
+    ? { ...profileUrls(profile), width: profile.width, height: profile.height }
+    : null;
+  return { location: row, image, editor, owners };
 }

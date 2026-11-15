@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { startTransition, useActionState, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -58,7 +59,18 @@ export function LocationForm() {
           {pending ? 'Creating…' : 'Create location'}
         </Button>
         <p role="status" className="text-sm">
-          {state.status === 'saved' && savedMessage(state)}
+          {state.status === 'saved' && (
+            <>
+              {savedMessage(state)}{' '}
+              <Link
+                href={`/locations/${state.id}/edit`}
+                className="underline underline-offset-4"
+                style={{ color: '#1d4ed8' }}
+              >
+                Add a photo
+              </Link>
+            </>
+          )}
           {state.status === 'error' && state.message}
         </p>
       </div>

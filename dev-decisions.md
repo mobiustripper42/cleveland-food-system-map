@@ -22,14 +22,18 @@
 - Codes (sign-in, verification, reset) sent with Resend — all sending lives in `lib/email.ts`, so
   swapping providers is a one-file change
 - Editor management via `npm run add-editor -- <email>`, not custom UI
-- Photo upload removed with Supabase Auth; returns on Cloudflare R2 (presigned uploads)
+- Photo upload removed with Supabase Auth; back on Cloudflare R2 (presigned uploads, #32)
 
 ### Data
 
 - Discrete fields — no blobs. Schema in `lib/db/schema.ts` (Drizzle)
 - Manager PII in separate `contacts` table, editor-only via RLS
 - Soft delete via `status = 'archived'` — nothing hard deleted
-- Single hero image per location, public bucket (Supabase Storage now, R2 later)
+- Files per location in `location_files` with a `type` (2026-11: `profile` only; types added per feature).
+  Stored in Cloudflare R2 (S3 API via `aws4fetch`), public reads via r2.dev for now, custom domain later
+- Images scaled in the browser and PUT straight to R2 with presigned URLs — no bytes through Vercel
+  (4.5 MB body cap), no sharp. Server verifies with HEAD before saving the row
+- Old Supabase Storage photos dropped with `image_path`, not migrated
 - KML import script is permanent tooling, not throwaway — runs at cutover
 
 ### Design
