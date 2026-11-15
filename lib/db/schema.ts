@@ -13,6 +13,7 @@ import {
   check,
   date,
   index,
+  integer,
   numeric,
   pgEnum,
   pgPolicy,
@@ -24,6 +25,7 @@ import {
   time,
   timestamp,
   unique,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { user } from './auth-schema.ts';
 
@@ -170,8 +172,6 @@ export const locations = pgTable.withRLS(
     ward: smallint('ward'),
     website: text('website'),
     notes: text('notes'),
-    // Object path relative to LOCATION_IMAGES_BASE_URL, not a URL.
-    image_path: text('image_path'),
     ...audit,
   },
   (t) => [
@@ -189,10 +189,6 @@ export const locations = pgTable.withRLS(
     check('locations_ward_positive', sql`${t.ward} > 0`),
     check('locations_state_format', sql`${t.state} ~ '^[A-Z]{2}$'`),
     check('locations_zip_format', sql`${t.zip} ~ '^[0-9]{5}(-[0-9]{4})?$'`),
-    check(
-      'locations_image_path_relative',
-      sql`${t.image_path} !~ '^(/|[a-z]+://)'`,
-    ),
 
     pgPolicy('locations_select_public', {
       for: 'select',
@@ -251,6 +247,65 @@ export const locationOwners = pgTable.withRLS(
       withCheck: isEditor,
     }),
     editorDeletePolicy('location_owners'),
+  ],
+);
+
+// What a file is for, which decides where the UI shows it. One `profile`
+// (hero image) per location; more types arrive with the features that use them.
+export const locationFileType = pgEnum('location_file_type', ['profile']);
+
+// Files in R2 (lib/r2.ts), keyed `locations/<location_id>/<type>/<random>.<ext>`
+// so the bucket browses per location. Keys are never reused; replacing a file
+// is delete + insert, then the old objects are swept from R2.
+export const locationFiles = pgTable.withRLS(
+  'location_files',
+  {
+    id: ksuidPk(),
+    location_id: text('location_id')
+      .notNull()
+      .references(() => locations.id, { onDelete: 'cascade' }),
+    type: locationFileType('type').notNull(),
+    // Object keys relative to R2_PUBLIC_BASE_URL, not URLs.
+    path: text('path').notNull(),
+    // Scaled-down copy, images only.
+    thumb_path: text('thumb_path'),
+    content_type: text('content_type').notNull(),
+    bytes: integer('bytes').notNull(),
+    width: smallint('width'),
+    height: smallint('height'),
+    ...audit,
+  },
+  (t) => [
+    index('location_files_location_id_idx').on(t.location_id),
+    uniqueIndex('location_files_one_profile_idx')
+      .on(t.location_id)
+      .where(sql`${t.type} = 'profile'`),
+    check('location_files_path_relative', sql`${t.path} !~ '^(/|[a-z]+://)'`),
+    check(
+      'location_files_thumb_path_relative',
+      sql`${t.thumb_path} !~ '^(/|[a-z]+://)'`,
+    ),
+    check('location_files_bytes_positive', sql`${t.bytes} > 0`),
+
+    // Visible exactly when the parent location is (RLS on locations applies
+    // inside the subquery).
+    pgPolicy('location_files_select_public', {
+      for: 'select',
+      to: appUser,
+      using: sql`exists (select 1 from public.locations l where l.id = ${t.location_id})`,
+    }),
+    // Editors and that location's owners add and remove files. No update:
+    // a replacement is a new row with new keys.
+    pgPolicy('location_files_insert_manager', {
+      for: 'insert',
+      to: appUser,
+      withCheck: sql`${isEditor} or ${ownsLocation(t.location_id)}`,
+    }),
+    pgPolicy('location_files_delete_manager', {
+      for: 'delete',
+      to: appUser,
+      using: sql`${isEditor} or ${ownsLocation(t.location_id)}`,
+    }),
   ],
 );
 
