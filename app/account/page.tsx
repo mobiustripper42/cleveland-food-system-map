@@ -3,9 +3,11 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 import { db } from '@/lib/db';
+import { getOwnContact } from '@/lib/db/queries';
 import { passkey } from '@/lib/db/schema';
 import { getSession } from '@/lib/session';
 import { Passkeys } from './Passkeys';
+import { ProfileForm } from './ProfileForm';
 
 export default function AccountPage() {
   return (
@@ -33,21 +35,31 @@ async function AccountDetails() {
   const session = await getSession();
   if (!session) redirect('/login');
 
-  const passkeys = await db
-    .select({
-      id: passkey.id,
-      name: passkey.name,
-      createdAt: passkey.createdAt,
-    })
-    .from(passkey)
-    .where(eq(passkey.userId, session.user.id))
-    .orderBy(asc(passkey.createdAt));
+  const [contact, passkeys] = await Promise.all([
+    getOwnContact(session.user.id),
+    db
+      .select({
+        id: passkey.id,
+        name: passkey.name,
+        createdAt: passkey.createdAt,
+      })
+      .from(passkey)
+      .where(eq(passkey.userId, session.user.id))
+      .orderBy(asc(passkey.createdAt)),
+  ]);
 
   return (
     <>
       <p className="text-sm">
         Signed in as <strong>{session.user.email}</strong>
       </p>
+      {session.user.emailVerified && (
+        <ProfileForm
+          email={session.user.email}
+          name={contact?.name ?? null}
+          phone={contact?.phone ?? null}
+        />
+      )}
       <Passkeys
         passkeys={passkeys.map((p) => ({
           id: p.id,

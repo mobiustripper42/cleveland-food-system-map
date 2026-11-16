@@ -42,7 +42,7 @@ Lightweight admin UI for 2–5 authorized editors.
 │   ├── sitemap.ts, robots.ts # / + /locations + every published /locations/<id>
 │   ├── admin/            # Editors only: index of admin tools; sections/ (site_sections HTML), editors/ (add/remove editors) — server actions via asUser
 │   ├── login/            # Sign-in / sign-up page (email code default, passkey, password, Google, Facebook)
-│   ├── account/          # Signed-in users: manage passkeys
+│   ├── account/          # Signed-in users: contact info (own `contacts` row), passkeys
 │   └── api/auth/[...all]/ # BetterAuth handler (all auth endpoints)
 ├── components/           # shadcn components + login form, auth/logout buttons, nav-links
 │   ├── map/              # map-view (Leaflet), location-panel, category-filter, search-bar — client-only, via MapClient
@@ -51,13 +51,14 @@ Lightweight admin UI for 2–5 authorized editors.
 ├── lib/
 │   ├── types.ts          # Shared TypeScript types (derived from Drizzle schema/queries)
 │   ├── geo.ts            # LatLng/UserPosition, haversine distanceMiles, formatMiles
-│   ├── db/               # Drizzle: schema.ts, auth-schema.ts (BetterAuth tables), index.ts (server-only client), queries.ts
+│   ├── db/               # Drizzle: schema.ts, auth-schema.ts (BetterAuth tables), index.ts (server-only client), queries.ts, users.ts, contacts.ts (contact ↔ user linking)
 │   ├── sections.ts       # SECTION_KEYS + sanitize-html allowlist for site_sections (server-only)
 │   ├── locations.ts      # CATEGORIES, category labels/colors, status labels + parseLocationForm (shared client/server validation)
 │   ├── format.ts         # schedule/time/phone formatters, directionsUrl
 │   ├── browse.ts         # /locations URL state: parseBrowseParams, browseQuery, matchesName
 │   ├── site-url.ts       # SITE_URL (absolute origin from Vercel env) — metadataBase, sitemap, robots
 │   ├── address.ts        # street/city/state/zip helpers: formatAddress, parseOneLineAddress (client/server/scripts)
+│   ├── phone.ts          # normalizePhone — storage format for contact phones (client/server/scripts)
 │   ├── geocode.ts        # US Census geocoder (free, no key) + Cleveland bbox check — form lookup + import-kml
 │   ├── files.ts          # location file types, scaling/size limits, R2 key prefix (client + server)
 │   ├── r2.ts             # Cloudflare R2 (aws4fetch, server-only): presigned PUT, HEAD, list, delete, prefix sweep
@@ -89,7 +90,7 @@ Source of truth: `lib/db/schema.ts` (Drizzle). Migrations in `drizzle/` — `npm
 | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | `locations`                                             | Public site data. `status` enum `draft \| published \| archived` (default `draft`). Address split into `street/city/state/zip` |
 | `market_schedules`                                      | Weekday + open/close time + optional season dates, per location                                                                     |
-| `contacts`                                              | Manager name/phone/email — PII, editors only                                                                                        |
+| `contacts`                                              | Manager name/phone/email — PII. Optional `user_id` (unique) = that user's profile; see Auth → Contacts ↔ users                   |
 | `location_contacts`                                     | locations ↔ contacts (many-to-many)                                                                                                 |
 | `location_files`                                        | Files in R2 per location: `type` enum (`profile` only, one per location), `path`/`thumb_path` = R2 keys. Editors + owners insert/delete |
 | `location_owners`                                       | locations ↔ BetterAuth `user` — non-editors who may edit that location's content (not status). Managed on `/locations/<id>/edit`    |
@@ -109,6 +110,10 @@ RLS (portable — no Supabase roles or `auth.uid()`):
 - Editors (row in `editors`): read all, insert/update everything; delete schedules/contacts/links
 - Owners (row in `location_owners`): read + update their own locations; see their own `location_owners` rows. Changing
   `status` is editor-only — `locations_status_editor_only` trigger (RLS can't compare old/new), applies to `app_user` only
+- Contacts: editors all; the linked user reads/updates their own; owners read contacts on their locations and update one only
+  if it's unclaimed and every location it's on is theirs (`public.owns_all_contact_locations`, security definer). Owners
+  attach/detach `location_contacts` on their locations. `contacts_link_guard` trigger: `app_user` can't set `user_id` or
+  change a claimed contact's email
 - Nobody can delete `locations` — archive instead
 - Editors read/insert/delete `editors` via security-definer `public.is_editor()` (a policy on `editors` can't
   subquery itself). Delete excludes your own row, so the last editor can't be removed
@@ -164,6 +169,9 @@ No `NEXT_PUBLIC_*` vars — nothing client-side needs config.
 - Account linking: Google only (verified emails). Unverified local accounts never get linked, and a code
   sign-in on one revokes its unproven password — blocks pre-registration takeover. Don't loosen
   `requireLocalEmailVerified` or trust Facebook
+- Contacts ↔ users (`lib/db/contacts.ts`): linking is lazy and proof-based — a contact is claimed when a user with a
+  *verified* matching email exists (BetterAuth `databaseHooks` on user create/update, KML import, `/account` save).
+  Contacts never create users. Claimed email mirrors `user.email`. Users edit name/phone on `/account`
 - Server: `getSession()` from `lib/session.ts`. Client: `authClient` from `lib/auth-client.ts`
 - Protected routes redirect unauthenticated users to `/login`. The proxy cookie check is optimistic —
   always verify with `getSession()` in the page/action
