@@ -1,10 +1,16 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import EditLink from '@/components/locations/edit-link';
+import EditorSection from '@/components/locations/editor-section';
 import LocationDetails, {
   detailStyles,
 } from '@/components/locations/location-details';
-import { getPublishedLocations } from '@/lib/db/queries';
+import {
+  getEditAccess,
+  getEditorContacts,
+  getPublishedLocations,
+} from '@/lib/db/queries';
 import { CATEGORY_LABELS } from '@/lib/locations';
 
 type Params = Promise<{ id: string }>;
@@ -94,6 +100,17 @@ export default async function LocationPage({ params }: { params: Params }) {
             </Link>
           </p>
         )}
+        {/* Not awaited: the prerendered page renders first; Edit and contacts
+            stream in for editors/owners (read with use()). */}
+        <EditLink
+          access={getEditAccess()}
+          id={location.id}
+          style={{ ...detailStyles.field, display: 'inline-block' }}
+        />
+        <EditorSection
+          contacts={getEditorContacts()}
+          locationId={location.id}
+        />
       </LocationDetails>
     </article>
   );
