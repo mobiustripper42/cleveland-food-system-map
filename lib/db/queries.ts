@@ -310,3 +310,22 @@ export async function getLocationForEdit(id: string) {
     : null;
   return { location: row, image, editor, owners };
 }
+
+/**
+ * The signed-in user's own contact (their profile), or null. Read through
+ * asUser so the contacts_select_self policy decides.
+ */
+export async function getOwnContact(userId: string) {
+  const [row] = await asUser(userId, (tx) =>
+    tx
+      .select({
+        id: contacts.id,
+        name: contacts.name,
+        phone: contacts.phone,
+        email: contacts.email,
+      })
+      .from(contacts)
+      .where(eq(contacts.user_id, userId)),
+  );
+  return row ?? null;
+}

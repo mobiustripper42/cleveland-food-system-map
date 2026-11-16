@@ -6,6 +6,7 @@ import { nextCookies } from 'better-auth/next-js';
 import { emailOTP } from 'better-auth/plugins/email-otp';
 import { db } from './db';
 import * as authSchema from './db/auth-schema';
+import { reconcileUserContact } from './db/contacts';
 import { sendEmail } from './email';
 
 const SITE_NAME = 'Cleveland Food System Map';
@@ -44,6 +45,14 @@ export const auth = betterAuth({
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
     },
   },
+  // A verified email claims the contact with that address (lib/db/contacts.ts);
+  // an email change carries the claimed contact along. Never blocks sign-in.
+  databaseHooks: {
+    user: {
+      create: { after: (u) => claimContact(u) },
+      update: { after: (u) => claimContact(u) },
+    },
+  },
   account: {
     // Google verifies emails, so a Google sign-in with an existing email
     // joins that user (and its editor row). Facebook emails aren't reliably
@@ -74,3 +83,15 @@ export const auth = betterAuth({
     nextCookies(), // must be last
   ],
 });
+
+async function claimContact(u: {
+  id: string;
+  email: string;
+  emailVerified: boolean;
+}) {
+  try {
+    await reconcileUserContact(db, u);
+  } catch (e) {
+    console.error('contact link failed for user', u.id, e);
+  }
+}
