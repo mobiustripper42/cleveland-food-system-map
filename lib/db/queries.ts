@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, asc, eq, ne, type SQL } from 'drizzle-orm';
+import { and, asc, eq, ne, type SQL, sql } from 'drizzle-orm';
 import { cacheLife, cacheTag } from 'next/cache';
 import { cache } from 'react';
 import { formatAddress } from '@/lib/address';
@@ -251,16 +251,74 @@ export async function canEditLocation(id: string): Promise<boolean> {
   return access === 'all' || access.includes(id);
 }
 
+/** One person on the edit page: a linked contact, an owner, or both. */
+export type LocationPersonRow = {
+  key: string;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  /** Set when attached via location_contacts. */
+  contact: { id: string; claimed: boolean; editable: boolean } | null;
+  /** Set when in location_owners (only ever listed for editors). */
+  owner: { user_id: string } | null;
+};
+
+/** Merges contacts and owners into one list, joined on contacts.user_id. */
+function mergePeople(
+  contactRows: {
+    id: string;
+    name: string | null;
+    phone: string | null;
+    email: string | null;
+    user_id: string | null;
+    editable: boolean;
+  }[],
+  ownerRows: { user_id: string; name: string; email: string }[],
+): LocationPersonRow[] {
+  const byUser = new Map<string, LocationPersonRow>();
+  const people = contactRows.map((c) => {
+    const person: LocationPersonRow = {
+      key: `c:${c.id}`,
+      name: c.name,
+      email: c.email,
+      phone: c.phone,
+      contact: { id: c.id, claimed: c.user_id != null, editable: c.editable },
+      owner: null,
+    };
+    if (c.user_id) byUser.set(c.user_id, person);
+    return person;
+  });
+  for (const o of ownerRows) {
+    const match = byUser.get(o.user_id);
+    if (match) {
+      match.owner = { user_id: o.user_id };
+    } else {
+      people.push({
+        key: `u:${o.user_id}`,
+        name: o.name && o.name !== o.email ? o.name : null,
+        email: o.email,
+        phone: null,
+        contact: null,
+        owner: { user_id: o.user_id },
+      });
+    }
+  }
+  const label = (p: LocationPersonRow) =>
+    (p.name ?? p.email ?? '').toLowerCase();
+  return people.sort((a, b) => label(a).localeCompare(label(b)));
+}
+
 /**
  * The full row (any status) for the edit form, or null if the caller can't
- * edit it. Read through asUser so RLS (editor or owner) decides; owners are
- * listed for editors only.
+ * edit it. Read through asUser so RLS (editor or owner) decides — including
+ * which contacts show. Owners are listed for editors only.
  */
 export async function getLocationForEdit(id: string) {
   const session = await getSession();
   if (!session) return null;
+  const editor = await isEditor();
 
-  const [[row], [profile]] = await asUser(session.user.id, (tx) =>
+  const [[row], [profile], contactRows] = await asUser(session.user.id, (tx) =>
     Promise.all([
       tx
         .select({
@@ -289,26 +347,44 @@ export async function getLocationForEdit(id: string) {
             eq(locationFiles.type, 'profile'),
           ),
         ),
+      tx
+        .select({
+          id: contacts.id,
+          name: contacts.name,
+          phone: contacts.phone,
+          email: contacts.email,
+          user_id: contacts.user_id,
+          // Mirrors contacts_update_owner; editors may edit any contact.
+          editable: editor
+            ? sql<boolean>`true`
+            : sql<boolean>`(${contacts.user_id} is null and public.owns_all_contact_locations(${contacts.id}))`,
+        })
+        .from(locationContacts)
+        .innerJoin(contacts, eq(locationContacts.contact_id, contacts.id))
+        .where(eq(locationContacts.location_id, id)),
     ]),
   );
   if (!row) return null;
 
-  const editor = await isEditor();
   // A row visible through RLS is editable: select and update policies match.
   // `user` has no app_user grants, hence db (owner) after the editor check.
-  const owners = editor
+  const ownerRows = editor
     ? await db
         .select({ user_id: user.id, name: user.name, email: user.email })
         .from(locationOwners)
         .innerJoin(user, eq(locationOwners.user_id, user.id))
         .where(eq(locationOwners.location_id, id))
-        .orderBy(asc(user.email))
-    : null;
+    : [];
 
   const image = profile
     ? { ...profileUrls(profile), width: profile.width, height: profile.height }
     : null;
-  return { location: row, image, editor, owners };
+  return {
+    location: row,
+    image,
+    editor,
+    people: mergePeople(contactRows, ownerRows),
+  };
 }
 
 /**

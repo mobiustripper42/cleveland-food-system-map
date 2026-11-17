@@ -2,7 +2,7 @@
 
 import { eq } from 'drizzle-orm';
 import { asUser, db } from '@/lib/db';
-import { reconcileUserContact } from '@/lib/db/contacts';
+import { ensureUserContact } from '@/lib/db/contacts';
 import { pgCode } from '@/lib/db/errors';
 import { contacts } from '@/lib/db/schema';
 import { normalizePhone } from '@/lib/phone';
@@ -52,11 +52,7 @@ export async function saveProfile(
   try {
     // Linking and creating set user_id, which only the owner role may do
     // (contacts_link_guard); the session above is the proof.
-    await reconcileUserContact(db, user);
-    await db
-      .insert(contacts)
-      .values({ email: user.email.toLowerCase(), user_id: user.id })
-      .onConflictDoNothing();
+    await ensureUserContact(db, user);
 
     // The edit itself runs as the user: RLS (contacts_update_self) and the
     // audit trigger apply.

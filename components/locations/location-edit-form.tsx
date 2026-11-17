@@ -1,18 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { startTransition, useActionState, useRef } from 'react';
+import { startTransition, useActionState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
-  addOwner,
-  type OwnerActionState,
-  removeOwner,
   updateLocation,
   type UpdateLocationState,
 } from '@/app/(site)/locations/actions';
-import type { EditableLocation, LocationOwner } from '@/lib/types';
+import type { EditableLocation } from '@/lib/types';
 import { LocationFields } from './location-fields';
 
 const LINK = { color: '#1d4ed8' };
@@ -83,130 +78,6 @@ export function LocationEditForm({
           {state.status === 'error' && state.message}
         </p>
       </div>
-    </form>
-  );
-}
-
-const idle: OwnerActionState = { status: 'idle' };
-
-/** Editors only: who besides editors may edit this location. */
-export function LocationOwners({
-  locationId,
-  owners,
-}: {
-  locationId: string;
-  owners: LocationOwner[];
-}) {
-  const formRef = useRef<HTMLFormElement>(null);
-  const [state, formAction, pending] = useActionState(
-    async (prev: OwnerActionState, formData: FormData) => {
-      const next = await addOwner(locationId, prev, formData);
-      if (next.status === 'done') formRef.current?.reset();
-      return next;
-    },
-    idle,
-  );
-
-  return (
-    <section aria-labelledby="owners-heading" className="flex flex-col gap-3">
-      <div>
-        <h2 id="owners-heading" className="text-lg font-semibold">
-          Owners
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Owners can edit this location&apos;s details but not publish,
-          unpublish, or archive it.
-        </p>
-      </div>
-
-      {owners.length > 0 && (
-        <ul className="flex flex-col divide-y divide-foreground/10 border-y border-foreground/10">
-          {owners.map((o) => (
-            <li
-              key={o.user_id}
-              className="flex flex-wrap items-center justify-between gap-2 py-3"
-            >
-              <div className="min-w-0">
-                <p className="break-all">{o.email}</p>
-                {o.name && o.name !== o.email && (
-                  <p className="text-sm text-muted-foreground">{o.name}</p>
-                )}
-              </div>
-              <RemoveOwnerButton
-                locationId={locationId}
-                userId={o.user_id}
-                email={o.email}
-              />
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <form ref={formRef} action={formAction} className="flex flex-col gap-2">
-        <Label htmlFor="owner-email">Add an owner by email</Label>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Input
-            id="owner-email"
-            name="email"
-            type="email"
-            required
-            maxLength={254}
-            autoComplete="off"
-            placeholder="someone@example.org"
-          />
-          <Button type="submit" disabled={pending} className="sm:w-auto">
-            {pending ? 'Adding…' : 'Add owner'}
-          </Button>
-        </div>
-        <p role="status" className="text-sm">
-          {state.status !== 'idle' && state.message}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          If they don&apos;t have an account yet, one is created — they sign in
-          with an emailed code or Google using that address.
-        </p>
-      </form>
-    </section>
-  );
-}
-
-function RemoveOwnerButton({
-  locationId,
-  userId,
-  email,
-}: {
-  locationId: string;
-  userId: string;
-  email: string;
-}) {
-  const [state, formAction, pending] = useActionState(
-    removeOwner.bind(null, locationId),
-    idle,
-  );
-
-  return (
-    <form
-      action={formAction}
-      onSubmit={(e) => {
-        if (!confirm(`Remove ${email} as an owner?`)) e.preventDefault();
-      }}
-      className="flex items-center gap-2"
-    >
-      <input type="hidden" name="user_id" value={userId} />
-      <Button
-        type="submit"
-        size="sm"
-        variant="outline"
-        disabled={pending}
-        aria-label={`Remove ${email}`}
-      >
-        {pending ? 'Removing…' : 'Remove'}
-      </Button>
-      {state.status === 'error' && (
-        <span role="status" className="text-sm">
-          {state.message}
-        </span>
-      )}
     </form>
   );
 }

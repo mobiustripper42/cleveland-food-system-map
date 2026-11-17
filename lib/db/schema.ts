@@ -402,6 +402,14 @@ export const contacts = pgTable.withRLS(
       to: appUser,
       using: sql`exists (select 1 from public.location_contacts lc where lc.contact_id = ${t.id} and ${ownsLocation(sql`lc.location_id`)})`,
     }),
+    // Owners add a new (unclaimed) contact, then attach it with
+    // location_contacts_insert_owner in the same transaction. It isn't
+    // visible to them until linked, so the insert can't use RETURNING.
+    pgPolicy('contacts_insert_owner', {
+      for: 'insert',
+      to: appUser,
+      withCheck: sql`${t.user_id} is null and exists (select 1 from public.location_owners o where o.user_id = ${currentUserId})`,
+    }),
     // Unclaimed, and every linked location is the caller's — editing a shared
     // contact would change other sites' listings. Security definer: under RLS
     // the owner can't see the links that would fail the check.
