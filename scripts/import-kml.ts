@@ -29,6 +29,8 @@ import {
   type locationCategory,
 } from '../lib/db/schema.ts';
 import { formatAddress, parseOneLineAddress } from '../lib/address.ts';
+import { linkContactsToVerifiedUsers } from '../lib/db/contacts.ts';
+import { normalizePhone } from '../lib/phone.ts';
 import { geocodeAddress, outsideCleveland } from '../lib/geocode.ts';
 
 // ---------------------------------------------------------------------------
@@ -109,19 +111,8 @@ function categoryFromStyleUrl(styleUrl: string | undefined): Category | null {
 // are public, contacts are not. Everything unrecognized goes to notes.
 // ---------------------------------------------------------------------------
 
-// Matches:
-//   (216) 555-1234  216-555-1234  216.555.1234  2165551234  2165551234ext.,2705
-// Normalized to 10 digits, plus " x<ext>" when present.
-const PHONE_RE =
-  /\(?(\d{3})\)?[-.\s]?(\d{3})[-.\s]?(\d{4})(?:\s*(?:ext|x)[.,\s]*(\d+))?/i;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const EMAIL_RE_LOOSE = /[^\s@]+@[^\s@]+\.[^\s@]+/;
-
-function normalizePhone(text: string): string | null {
-  const m = text.match(PHONE_RE);
-  if (!m) return null;
-  return `${m[1]}${m[2]}${m[3]}${m[4] ? ` x${m[4]}` : ''}`;
-}
 
 function stripHtml(html: string): string {
   return html
@@ -304,7 +295,7 @@ function parsePlacemark(
   }
   if (
     desc.notes &&
-    (EMAIL_RE_LOOSE.test(desc.notes) || PHONE_RE.test(desc.notes))
+    (EMAIL_RE_LOOSE.test(desc.notes) || normalizePhone(desc.notes) !== null)
   )
     warnings.push(
       `"${name}": notes look like they contain contact info (public!)`,
@@ -343,6 +334,7 @@ interface WriteCounts {
   updated: number;
   geocoded: number;
   contactsCreated: number;
+  contactsClaimed: number;
   linksCreated: number;
 }
 
@@ -361,9 +353,10 @@ async function upsertContact(
       .values(c)
       .onConflictDoUpdate({
         target: contacts.email,
+        // A claimed contact (user_id set) is that user's profile: keep theirs.
         set: {
-          name: sql`coalesce(excluded.name, ${contacts.name})`,
-          phone: sql`coalesce(excluded.phone, ${contacts.phone})`,
+          name: sql`case when ${contacts.user_id} is null then coalesce(excluded.name, ${contacts.name}) else ${contacts.name} end`,
+          phone: sql`case when ${contacts.user_id} is null then coalesce(excluded.phone, ${contacts.phone}) else ${contacts.phone} end`,
         },
       })
       .returning({ id: contacts.id, created: sql<boolean>`xmax = 0` });
@@ -424,6 +417,7 @@ async function writeRecords(
     geocoded: 0,
     contactsCreated: 0,
     linksCreated: 0,
+    contactsClaimed: 0,
   };
 
   await db.transaction(async (tx) => {
@@ -475,6 +469,9 @@ async function writeRecords(
         counts.linksCreated += linked.length;
       }
     }
+
+    // New contacts whose email already belongs to a verified user.
+    counts.contactsClaimed = await linkContactsToVerifiedUsers(tx);
   });
 
   return counts;
@@ -644,6 +641,7 @@ function printSummary(
     console.log(`Located:           ${counts.geocoded}`);
     console.log(`Contacts created:  ${counts.contactsCreated}`);
     console.log(`Links created:     ${counts.linksCreated}`);
+    console.log(`Contacts claimed:  ${counts.contactsClaimed}`);
   }
 
   if (warnings.length > 0) {

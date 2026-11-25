@@ -7,7 +7,7 @@
  * Generate migrations with `npm run db:generate`. Functions, triggers, and
  * grants that Drizzle can't express live in the custom migrations under drizzle/.
  */
-import { sql } from 'drizzle-orm';
+import { type SQL, sql } from 'drizzle-orm';
 import {
   type AnyPgColumn,
   check,
@@ -93,7 +93,7 @@ const editorWritePolicies = (table: string) => [
 
 // Referenced by name (not the Drizzle table) because locations is declared
 // before location_owners.
-const ownsLocation = (locationId: AnyPgColumn) =>
+const ownsLocation = (locationId: AnyPgColumn | SQL) =>
   sql`exists (select 1 from public.location_owners o where o.location_id = ${locationId} and o.user_id = ${currentUserId})`;
 
 const editorDeletePolicy = (table: string) =>
@@ -356,8 +356,16 @@ export const marketSchedules = pgTable.withRLS(
   ],
 );
 
-// Manager PII. Editors only — getEditorContacts() applies the same rule for
-// the owner-role reads that bypass RLS.
+// Manager PII: editors, the contact's own user, and owners of a linked
+// location. getEditorContacts() applies the editor rule for the owner-role
+// reads that bypass RLS.
+//
+// A contact may belong to a user (user_id), which makes it that user's
+// profile. Linking is proof-based and runs as the owner role only
+// (lib/db/contacts.ts): a verified user whose email matches. Once linked
+// ("claimed"), owners can't edit it and its email mirrors user.email — the
+// contacts_link_guard trigger keeps app_user from setting user_id or changing
+// a claimed email.
 export const contacts = pgTable.withRLS(
   'contacts',
   {
@@ -365,13 +373,44 @@ export const contacts = pgTable.withRLS(
     name: text('name'),
     phone: text('phone'),
     email: text('email'),
+    user_id: text('user_id').references(() => user.id, {
+      onDelete: 'set null',
+    }),
     ...audit,
   },
   (t) => [
     // Same person manages several sites in the source data; dedupe on email.
     unique('contacts_email_key').on(t.email),
+    // One profile per user.
+    unique('contacts_user_id_key').on(t.user_id),
     ...editorWritePolicies('contacts'),
     editorDeletePolicy('contacts'),
+    pgPolicy('contacts_select_self', {
+      for: 'select',
+      to: appUser,
+      using: sql`${t.user_id} = ${currentUserId}`,
+    }),
+    pgPolicy('contacts_update_self', {
+      for: 'update',
+      to: appUser,
+      using: sql`${t.user_id} = ${currentUserId}`,
+      withCheck: sql`${t.user_id} = ${currentUserId}`,
+    }),
+    // RLS on location_contacts applies inside: owners see their own links.
+    pgPolicy('contacts_select_owner', {
+      for: 'select',
+      to: appUser,
+      using: sql`exists (select 1 from public.location_contacts lc where lc.contact_id = ${t.id} and ${ownsLocation(sql`lc.location_id`)})`,
+    }),
+    // Unclaimed, and every linked location is the caller's — editing a shared
+    // contact would change other sites' listings. Security definer: under RLS
+    // the owner can't see the links that would fail the check.
+    pgPolicy('contacts_update_owner', {
+      for: 'update',
+      to: appUser,
+      using: sql`${t.user_id} is null and (select public.owns_all_contact_locations(${t.id}))`,
+      withCheck: sql`${t.user_id} is null and (select public.owns_all_contact_locations(${t.id}))`,
+    }),
   ],
 );
 
@@ -413,5 +452,22 @@ export const locationContacts = pgTable.withRLS(
     index('location_contacts_contact_id_idx').on(t.contact_id),
     ...editorWritePolicies('location_contacts'),
     editorDeletePolicy('location_contacts'),
+    // Owners attach and detach contacts on their own locations (editing the
+    // contact itself is contacts_update_owner).
+    pgPolicy('location_contacts_select_owner', {
+      for: 'select',
+      to: appUser,
+      using: ownsLocation(t.location_id),
+    }),
+    pgPolicy('location_contacts_insert_owner', {
+      for: 'insert',
+      to: appUser,
+      withCheck: ownsLocation(t.location_id),
+    }),
+    pgPolicy('location_contacts_delete_owner', {
+      for: 'delete',
+      to: appUser,
+      using: ownsLocation(t.location_id),
+    }),
   ],
 );
