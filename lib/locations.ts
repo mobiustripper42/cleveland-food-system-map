@@ -16,11 +16,23 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   market: 'Farmers Market / Farm Stand',
 };
 
-/** Pin/accent color per category (see CLAUDE.md design rules). */
+/**
+ * Pin/accent color per category (see CLAUDE.md design rules). No red: farm
+ * is amber, picked to stay apart from garden green under protan/deutan
+ * simulation by lightness. Color is never the only cue: pair it with
+ * `CategoryIcon` (components/locations/category-icon) and the label.
+ */
 export const CATEGORY_COLORS: Record<Category, string> = {
   garden: '#3a7d44',
-  farm: '#c0392b',
+  farm: '#d97706',
   market: '#7b2d8b',
+};
+
+/** Text on a CATEGORY_COLORS fill, ≥4.5:1 (white on amber fails). */
+export const CATEGORY_ON_COLORS: Record<Category, string> = {
+  garden: '#ffffff',
+  farm: '#171717',
+  market: '#ffffff',
 };
 
 export const CATEGORIES = Object.keys(CATEGORY_LABELS) as Category[];

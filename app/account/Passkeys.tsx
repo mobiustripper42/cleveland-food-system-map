@@ -1,6 +1,8 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { ConfirmButton } from '@/components/ui/confirm-button';
+import { FormStatus } from '@/components/ui/field-error';
 import { authClient } from '@/lib/auth-client';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
@@ -31,13 +33,18 @@ export function Passkeys({ passkeys }: { passkeys: Passkey[] }) {
   };
 
   const remove = (p: Passkey) => {
-    if (!window.confirm(`Remove passkey "${p.name ?? 'Unnamed'}"?`)) return;
     run(() => authClient.passkey.deletePasskey({ id: p.id }));
+    // The row goes away after refresh; keep focus in the section.
+    document.getElementById('passkeys-heading')?.focus();
   };
 
   return (
     <section aria-labelledby="passkeys-heading" className="flex flex-col gap-3">
-      <h2 id="passkeys-heading" className="text-lg font-semibold">
+      <h2
+        id="passkeys-heading"
+        tabIndex={-1}
+        className="text-lg font-semibold focus:outline-none"
+      >
         Passkeys
       </h2>
       <p className="text-sm">
@@ -49,20 +56,26 @@ export function Passkeys({ passkeys }: { passkeys: Passkey[] }) {
           {passkeys.map((p) => (
             <li
               key={p.id}
-              className="flex items-center justify-between gap-3 rounded-md border p-3 text-sm"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-3 text-sm"
             >
-              <span>
+              <span className="min-w-0 break-words">
                 {p.name ?? 'Unnamed passkey'}
                 {p.createdAt && (
-                  <span className="block text-xs opacity-70">
+                  <span className="block text-muted-foreground">
                     Added {new Date(p.createdAt).toLocaleDateString()}
                   </span>
                 )}
               </span>
-              {/* Destructive = dark, never red (CLAUDE.md design rules). */}
-              <Button size="sm" disabled={pending} onClick={() => remove(p)}>
+              <ConfirmButton
+                size="sm"
+                disabled={pending}
+                aria-label={`Remove passkey ${p.name ?? 'Unnamed passkey'}`}
+                title={`Remove passkey "${p.name ?? 'Unnamed'}"?`}
+                description="You won't be able to sign in with it any more. Email codes still work."
+                onConfirm={() => remove(p)}
+              >
                 Remove
-              </Button>
+              </ConfirmButton>
             </li>
           ))}
         </ul>
@@ -75,11 +88,7 @@ export function Passkeys({ passkeys }: { passkeys: Passkey[] }) {
       >
         {pending ? 'Working…' : 'Add a passkey'}
       </Button>
-      {message && (
-        <p role="alert" className="text-sm font-medium">
-          {message}
-        </p>
-      )}
+      <FormStatus tone="error">{message}</FormStatus>
     </section>
   );
 }

@@ -18,11 +18,7 @@ export default function SectionsPage() {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4 md:p-10">
       <div>
-        <Link
-          href="/admin"
-          className="text-sm underline underline-offset-4"
-          style={{ color: '#1d4ed8' }}
-        >
+        <Link href="/admin" className="link inline-flex min-h-11 items-center">
           ← Admin
         </Link>
       </div>

@@ -1,13 +1,8 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { FormStatus } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { authClient } from '@/lib/auth-client';
@@ -33,13 +28,35 @@ const TITLE: Record<View['kind'], string> = {
   'code-email': 'Sign in',
   'code-otp': 'Enter your code',
   password: 'Sign in with password',
-  signup: 'Create an account',
+  signup: 'Create a password account',
   verify: 'Verify your email',
   forgot: 'Reset your password',
   reset: 'Choose a new password',
 };
 
+/** Screens where the user is typing an emailed code: nothing else competes. */
+const CODE_ENTRY: View['kind'][] = ['code-otp', 'verify', 'reset'];
+
+/** OAuth `?error=` codes → what happened and what to do. */
+function oauthErrorMessage(code: string) {
+  const known: Record<string, string> = {
+    access_denied: 'Sign-in was cancelled. Try again, or use an email code.',
+    account_not_linked:
+      'That email already has an account here. Sign in with an email code instead — Google links automatically once the email is verified.',
+    email_not_found:
+      'The provider didn’t share an email address. Use an email code instead.',
+    state_mismatch: 'Sign-in timed out. Please try again.',
+  };
+  return (
+    known[code] ??
+    'Sign-in with that provider didn’t work. Try again, or use an email code.'
+  );
+}
+
 type Result = { error: { message?: string; code?: string } | null };
+
+/** Which action is in flight, so only that button says it's busy. */
+type Busy = 'submit' | 'resend' | 'passkey' | 'google' | 'facebook' | null;
 
 export function LoginForm() {
   const router = useRouter();
@@ -52,9 +69,10 @@ export function LoginForm() {
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(() => {
     const code = searchParams.get('error');
-    return code ? `Sign-in failed (${code.replaceAll('_', ' ')}).` : null;
+    return code ? oauthErrorMessage(code) : null;
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const [busy, setBusy] = useState<Busy>(null);
+  const isLoading = busy !== null;
 
   const go = (next: View, message: string | null = null) => {
     setView(next);
@@ -69,44 +87,55 @@ export function LoginForm() {
   };
 
   // Runs one auth call with loading/error handling; returns true on success.
-  const attempt = async (call: () => Promise<Result>) => {
-    setIsLoading(true);
+  const attempt = async (
+    call: () => Promise<Result>,
+    which: Busy = 'submit',
+  ) => {
+    setBusy(which);
     setError(null);
     try {
       const { error } = await call();
       if (error) {
-        setError(error.message ?? 'Something went wrong');
+        setError(error.message ?? 'Something went wrong. Please try again.');
         return { ok: false as const, code: error.code };
       }
       return { ok: true as const };
     } finally {
-      setIsLoading(false);
+      setBusy(null);
     }
+  };
+
+  const sendSignInCode = async (to: string, which: Busy = 'submit') => {
+    const r = await attempt(
+      () =>
+        authClient.emailOtp.sendVerificationOtp({ email: to, type: 'sign-in' }),
+      which,
+    );
+    if (r.ok)
+      go({ kind: 'code-otp', email: to }, `We sent a 6-digit code to ${to}.`);
   };
 
   const sendCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    const r = await attempt(() =>
-      authClient.emailOtp.sendVerificationOtp({ email, type: 'sign-in' }),
-    );
-    if (r.ok)
-      go({ kind: 'code-otp', email }, `We sent a 6-digit code to ${email}.`);
+    await sendSignInCode(email);
   };
 
   const signInWithCode = async (e: React.FormEvent, to: string) => {
     e.preventDefault();
     const r = await attempt(() =>
-      authClient.signIn.emailOtp({ email: to, otp: otp.trim() }),
+      authClient.signIn.emailOtp({ email: to, otp }),
     );
     if (r.ok) done();
   };
 
-  const sendVerification = async (to: string) => {
-    const r = await attempt(() =>
-      authClient.emailOtp.sendVerificationOtp({
-        email: to,
-        type: 'email-verification',
-      }),
+  const sendVerification = async (to: string, which: Busy = 'submit') => {
+    const r = await attempt(
+      () =>
+        authClient.emailOtp.sendVerificationOtp({
+          email: to,
+          type: 'email-verification',
+        }),
+      which,
     );
     if (r.ok)
       go({ kind: 'verify', email: to }, `We sent a 6-digit code to ${to}.`);
@@ -134,32 +163,33 @@ export function LoginForm() {
   const verify = async (e: React.FormEvent, to: string) => {
     e.preventDefault();
     const r = await attempt(() =>
-      authClient.emailOtp.verifyEmail({ email: to, otp: otp.trim() }),
+      authClient.emailOtp.verifyEmail({ email: to, otp }),
     );
     if (r.ok) done(); // autoSignInAfterVerification creates the session
   };
 
-  const requestReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const r = await attempt(() =>
-      authClient.emailOtp.requestPasswordReset({ email }),
+  const sendReset = async (to: string, which: Busy = 'submit') => {
+    const r = await attempt(
+      () => authClient.emailOtp.requestPasswordReset({ email: to }),
+      which,
     );
     // Same message whether or not the email has an account.
     if (r.ok)
       go(
-        { kind: 'reset', email },
-        `If ${email} has an account, a 6-digit code is on its way.`,
+        { kind: 'reset', email: to },
+        `If ${to} has an account, a 6-digit code is on its way.`,
       );
+  };
+
+  const requestReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await sendReset(email);
   };
 
   const resetPassword = async (e: React.FormEvent, to: string) => {
     e.preventDefault();
     const r = await attempt(() =>
-      authClient.emailOtp.resetPassword({
-        email: to,
-        otp: otp.trim(),
-        password,
-      }),
+      authClient.emailOtp.resetPassword({ email: to, otp, password }),
     );
     if (r.ok) {
       setPassword('');
@@ -168,13 +198,13 @@ export function LoginForm() {
   };
 
   const signInWithPasskey = async () => {
-    const r = await attempt(() => authClient.signIn.passkey());
+    const r = await attempt(() => authClient.signIn.passkey(), 'passkey');
     if (r.ok) done();
   };
 
   // Leaves the site for the provider; only a failure to start lands back here.
   const signInWithSocial = async (provider: 'google' | 'facebook') => {
-    setIsLoading(true);
+    setBusy(provider);
     setError(null);
     const { error } = await authClient.signIn.social({
       provider,
@@ -182,8 +212,8 @@ export function LoginForm() {
       errorCallbackURL: ERROR_URL,
     });
     if (error) {
-      setError(error.message ?? 'Could not start sign-in');
-      setIsLoading(false);
+      setError(error.message ?? 'Could not start sign-in. Please try again.');
+      setBusy(null);
     }
   };
 
@@ -219,33 +249,50 @@ export function LoginForm() {
     <Field id="otp" label="6-digit code">
       <Input
         id="otp"
+        // Focus lands here when the code screen opens.
+        autoFocus
         inputMode="numeric"
         autoComplete="one-time-code"
         pattern="[0-9]{6}"
-        maxLength={6}
         required
+        // Digits only, so a pasted "123 456" or "123-456" still works (no
+        // maxLength: it would cut the paste before the cleanup).
         value={otp}
-        onChange={(e) => setOtp(e.target.value)}
+        onChange={(e) => {
+          e.currentTarget.setCustomValidity('');
+          setOtp(e.target.value.replace(/\D/g, '').slice(0, 6));
+        }}
+        onInvalid={(e) =>
+          e.currentTarget.setCustomValidity(
+            'Enter the 6 digits from the email.',
+          )
+        }
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? 'login-error' : undefined}
+        className="tracking-[0.3em] tabular-nums"
       />
     </Field>
   );
 
-  const submit = (label: string, busy: string) => (
+  const submit = (label: string, busyLabel: string) => (
     <Button type="submit" className="w-full" disabled={isLoading}>
-      {isLoading ? busy : label}
+      {busy === 'submit' ? busyLabel : label}
     </Button>
   );
 
-  const link = (label: string, onClick: () => void) => (
+  const link = (label: string, onClick: () => void, disabled = false) => (
     <button
       type="button"
       onClick={onClick}
-      className="text-sm underline underline-offset-4"
-      style={{ color: '#1d4ed8' }}
+      disabled={disabled}
+      className="link inline-flex min-h-11 cursor-pointer items-center text-sm disabled:cursor-wait disabled:opacity-50"
     >
       {label}
     </button>
   );
+
+  const resend = (send: () => void) =>
+    link(busy === 'resend' ? 'Sending…' : 'Send a new code', send, isLoading);
 
   let body: React.ReactNode;
   switch (view.kind) {
@@ -265,7 +312,10 @@ export function LoginForm() {
         >
           {codeField}
           {submit('Sign in', 'Signing in…')}
-          {link('Use a different email', () => go({ kind: 'code-email' }))}
+          <div className="flex flex-wrap justify-between gap-x-4">
+            {resend(() => sendSignInCode(view.email, 'resend'))}
+            {link('Use a different email', () => go({ kind: 'code-email' }))}
+          </div>
         </form>
       );
       break;
@@ -305,7 +355,7 @@ export function LoginForm() {
         >
           {codeField}
           {submit('Verify', 'Verifying…')}
-          {link('Send a new code', () => sendVerification(view.email))}
+          {resend(() => sendVerification(view.email, 'resend'))}
         </form>
       );
       break;
@@ -326,78 +376,99 @@ export function LoginForm() {
           {codeField}
           {passwordField('new-password', 'New password (8+ characters)')}
           {submit('Set password', 'Saving…')}
+          {resend(() => sendReset(view.email, 'resend'))}
         </form>
       );
       break;
   }
 
   const onCodeScreens = view.kind === 'code-email' || view.kind === 'code-otp';
+  const enteringCode = CODE_ENTRY.includes(view.kind);
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-2xl">{TITLE[view.kind]}</CardTitle>
-        <CardDescription>
+      <CardHeader className="p-4 sm:p-6">
+        <h1 className="text-2xl font-semibold leading-tight tracking-tight">
+          {TITLE[view.kind]}
+        </h1>
+        {/* Always mounted: "We sent a code…" is announced on change. */}
+        <p role="status" className="text-sm text-muted-foreground">
           {notice ??
             (onCodeScreens
-              ? 'We’ll email you a one-time code. No password needed — new here? This creates your account.'
+              ? 'We’ll email you a one-time code — no password needed. New here? The same code creates your account.'
               : null)}
-        </CardDescription>
+        </p>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
         <div className="flex flex-col gap-6">
           {body}
-          {error && (
-            <p role="alert" className="text-sm font-medium">
-              {error}
-            </p>
+          <FormStatus id="login-error" tone="error">
+            {error}
+          </FormStatus>
+
+          {/* Hidden while typing a code: one task per screen. */}
+          {!enteringCode && (
+            <>
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                <span className="h-px flex-1 bg-border" aria-hidden />
+                or
+                <span className="h-px flex-1 bg-border" aria-hidden />
+              </div>
+              <div className="flex flex-col gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  disabled={isLoading}
+                  onClick={signInWithPasskey}
+                >
+                  {busy === 'passkey'
+                    ? 'Waiting for passkey…'
+                    : 'Sign in with a passkey'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  disabled={isLoading}
+                  onClick={() => signInWithSocial('google')}
+                >
+                  {busy === 'google'
+                    ? 'Opening Google…'
+                    : 'Continue with Google'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  disabled={isLoading}
+                  onClick={() => signInWithSocial('facebook')}
+                >
+                  {busy === 'facebook'
+                    ? 'Opening Facebook…'
+                    : 'Continue with Facebook'}
+                </Button>
+              </div>
+
+              <nav
+                aria-label="Other ways to sign in"
+                className="flex flex-col items-center"
+              >
+                {!onCodeScreens &&
+                  link('Sign in with an email code', () =>
+                    go({ kind: 'code-email' }),
+                  )}
+                {view.kind !== 'password' &&
+                  link('Sign in with a password', () =>
+                    go({ kind: 'password' }),
+                  )}
+                {view.kind !== 'signup' &&
+                  link('Prefer a password? Create a password account', () =>
+                    go({ kind: 'signup' }),
+                  )}
+              </nav>
+            </>
           )}
-
-          <div className="flex flex-col gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              disabled={isLoading}
-              onClick={signInWithPasskey}
-            >
-              Sign in with a passkey
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              disabled={isLoading}
-              onClick={() => signInWithSocial('google')}
-            >
-              Continue with Google
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              disabled={isLoading}
-              onClick={() => signInWithSocial('facebook')}
-            >
-              Continue with Facebook
-            </Button>
-          </div>
-
-          <nav
-            aria-label="Other ways to sign in"
-            className="flex flex-col items-center gap-2"
-          >
-            {!onCodeScreens &&
-              link('Sign in with an email code', () =>
-                go({ kind: 'code-email' }),
-              )}
-            {view.kind !== 'password' &&
-              link('Sign in with a password', () => go({ kind: 'password' }))}
-            {view.kind !== 'signup' &&
-              link('Create an account with a password', () =>
-                go({ kind: 'signup' }),
-              )}
-          </nav>
         </div>
       </CardContent>
     </Card>

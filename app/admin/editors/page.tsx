@@ -11,11 +11,7 @@ export default function EditorsPage() {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4 md:p-10">
       <div>
-        <Link
-          href="/admin"
-          className="text-sm underline underline-offset-4"
-          style={{ color: '#1d4ed8' }}
-        >
+        <Link href="/admin" className="link inline-flex min-h-11 items-center">
           ← Admin
         </Link>
       </div>
@@ -40,6 +36,13 @@ async function Editors() {
   return (
     <>
       <AddEditorForm />
+      <h2
+        id="editors-heading"
+        tabIndex={-1}
+        className="text-lg font-semibold focus:outline-none"
+      >
+        Current editors
+      </h2>
       <ul className="flex flex-col divide-y divide-foreground/10 border-y border-foreground/10">
         {editors.map((e) => (
           <li

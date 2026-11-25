@@ -1,16 +1,26 @@
 'use client';
 
 import Link from 'next/link';
-import { startTransition, useActionState } from 'react';
+import {
+  startTransition,
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-button';
+import { FormStatus } from '@/components/ui/field-error';
+import {
+  focusFirstInvalid,
+  useUnsavedChangesGuard,
+} from '@/hooks/use-unsaved-changes-guard';
 import {
   updateLocation,
   type UpdateLocationState,
 } from '@/app/(site)/locations/actions';
 import type { EditableLocation } from '@/lib/types';
 import { LocationFields } from './location-fields';
-
-const LINK = { color: '#1d4ed8' };
 
 function savedMessage(s: Extract<UpdateLocationState, { status: 'saved' }>) {
   const pin =
@@ -38,17 +48,52 @@ export function LocationEditForm({
     { status: 'idle' },
   );
   const errors = state.status === 'error' ? (state.errors ?? {}) : {};
+  const formRef = useRef<HTMLFormElement>(null);
+  const [dirty, setDirty] = useState(false);
+  const [confirmArchive, setConfirmArchive] = useState<FormData | null>(null);
+  useUnsavedChangesGuard(dirty);
+  useEffect(() => {
+    if (state.status === 'saved') setDirty(false);
+    if (state.status === 'error') focusFirstInvalid(formRef.current);
+  }, [state]);
+
+  const submit = (formData: FormData) =>
+    startTransition(() => formAction(formData));
 
   // Submit manually: a plain `action={…}` resets the form after every
   // submit, which would revert unsaved input on a validation error.
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    startTransition(() => formAction(formData));
+    // Archiving takes it off the map: confirm first.
+    if (
+      formData.get('status') === 'archived' &&
+      location.status !== 'archived'
+    ) {
+      setConfirmArchive(formData);
+      return;
+    }
+    submit(formData);
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-4">
+    <form
+      ref={formRef}
+      onSubmit={onSubmit}
+      onChange={() => setDirty(true)}
+      className="flex flex-col gap-4"
+    >
+      <ConfirmDialog
+        open={confirmArchive !== null}
+        onOpenChange={(open) => !open && setConfirmArchive(null)}
+        title={`Archive ${location.name}?`}
+        description="It comes off the public map and list. You can restore it later by changing the status back."
+        confirmLabel="Archive"
+        onConfirm={() => {
+          if (confirmArchive) submit(confirmArchive);
+          setConfirmArchive(null);
+        }}
+      />
       <LocationFields
         // Remount on fresh server data (after a save) so the uncontrolled
         // inputs show the stored values.
@@ -62,21 +107,20 @@ export function LocationEditForm({
         <Button type="submit" disabled={pending}>
           {pending ? 'Saving…' : 'Save changes'}
         </Button>
-        <p role="status" className="text-sm">
-          {state.status === 'saved' && (
+        <FormStatus
+          tone={state.status === 'saved' ? 'success' : 'error'}
+          className="flex-1"
+        >
+          {!dirty && state.status === 'saved' && (
             <>
               {savedMessage(state)}{' '}
-              <Link
-                href={`/locations/${location.id}`}
-                className="underline underline-offset-4"
-                style={LINK}
-              >
+              <Link href={`/locations/${location.id}`} className="link">
                 View
               </Link>
             </>
           )}
           {state.status === 'error' && state.message}
-        </p>
+        </FormStatus>
       </div>
     </form>
   );

@@ -9,28 +9,26 @@ export async function AuthButton() {
   const editor = session ? await isEditor() : false;
 
   return session ? (
-    <div className="flex items-center gap-4">
+    <div className="flex min-w-0 items-center gap-x-4">
       {editor && (
         <Link
           href="/admin"
-          className="underline underline-offset-4 whitespace-nowrap"
-          style={{ color: '#1d4ed8' }}
+          className="link inline-flex min-h-11 items-center whitespace-nowrap"
         >
           Admin
         </Link>
       )}
       <Link
         href="/account"
-        className="underline underline-offset-4 truncate max-w-[12rem]"
-        style={{ color: '#1d4ed8' }}
+        className="link inline-flex min-h-11 items-center min-w-0 max-w-[12rem]"
       >
-        <span className="hidden sm:inline">{session.user.email}</span>
+        <span className="hidden truncate sm:inline">{session.user.email}</span>
         <span className="sm:hidden">Account</span>
       </Link>
       <LogoutButton />
     </div>
   ) : (
-    <Button asChild size="sm" variant="outline">
+    <Button asChild variant="outline">
       <Link href="/login">Sign in</Link>
     </Button>
   );

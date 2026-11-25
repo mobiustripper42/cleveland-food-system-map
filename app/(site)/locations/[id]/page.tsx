@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { BackToList } from '@/components/locations/back-to-list';
 import EditLink from '@/components/locations/edit-link';
 import EditorSection from '@/components/locations/editor-section';
 import LocationDetails, {
-  detailStyles,
+  detailClasses,
 } from '@/components/locations/location-details';
 import {
   getEditAccess,
@@ -83,19 +84,20 @@ export default async function LocationPage({ params }: { params: Params }) {
           __html: JSON.stringify(jsonLd).replace(/</g, '\u003c'),
         }}
       />
-      <nav className="px-4 pt-4 text-sm">
-        <Link href="/locations" style={detailStyles.link}>
-          ← All locations
-        </Link>
+      <nav aria-label="Breadcrumb" className="px-4 pt-2 text-sm">
+        <BackToList className="link inline-flex min-h-11 items-center" />
       </nav>
       <LocationDetails
         location={location}
         heading="h1"
-        bodyStyle={{ padding: '12px 16px 32px' }}
+        bodyClassName="px-4 pb-8 pt-3"
       >
         {location.lat !== null && location.lng !== null && (
-          <p style={{ ...detailStyles.field, marginTop: 16 }}>
-            <Link href={`/?location=${location.id}`} style={detailStyles.link}>
+          <p className={`${detailClasses.field} mt-4`}>
+            <Link
+              href={`/?location=${location.id}`}
+              className={detailClasses.link}
+            >
               View on map
             </Link>
           </p>
@@ -105,7 +107,7 @@ export default async function LocationPage({ params }: { params: Params }) {
         <EditLink
           access={getEditAccess()}
           id={location.id}
-          style={{ ...detailStyles.field, display: 'inline-block' }}
+          className={detailClasses.link}
         />
         <EditorSection
           contacts={getEditorContacts()}

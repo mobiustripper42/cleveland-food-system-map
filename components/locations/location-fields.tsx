@@ -2,8 +2,9 @@
 
 import { useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { fieldClass, Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { FieldError } from '@/components/ui/field-error';
 import {
   CATEGORY_LABELS,
   LOCATION_LIMITS,
@@ -15,9 +16,6 @@ import {
   findCoordinates,
   type FindCoordinatesResult,
 } from '@/app/(site)/locations/actions';
-
-export const fieldClass =
-  'w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm';
 
 export type LocationDefaults = Partial<{
   [K in LocationField]: LocationInput[K] | null;
@@ -76,15 +74,16 @@ export function LocationFields({
     'aria-invalid': errors[name] ? true : undefined,
     'aria-describedby': errors[name] ? `loc-${name}-error` : undefined,
   });
-  const error = (name: LocationField) =>
-    errors[name] && (
-      <p id={`loc-${name}-error`} className="text-sm font-medium">
-        {errors[name]}
-      </p>
-    );
+  const error = (name: LocationField) => (
+    <FieldError id={`loc-${name}-error`}>{errors[name]}</FieldError>
+  );
 
   return (
     <>
+      <p className="text-sm text-muted-foreground">
+        Fields marked <span aria-hidden>*</span>
+        <span className="sr-only">with an asterisk</span> are required.
+      </p>
       <div className="flex flex-col gap-1">
         <Label htmlFor="loc-name">Name *</Label>
         <Input {...field('name')} required maxLength={LOCATION_LIMITS.name} />
@@ -161,7 +160,8 @@ export function LocationFields({
             <Label htmlFor="loc-zip">ZIP</Label>
             <Input
               {...field('zip')}
-              inputMode="numeric"
+              // Not inputMode="numeric": ZIP+4 needs the hyphen.
+              autoComplete="postal-code"
               maxLength={10}
               placeholder="44113"
             />
@@ -194,15 +194,14 @@ export function LocationFields({
                   href={`https://www.openstreetmap.org/?mlat=${lookup.lat}&mlon=${lookup.lng}#map=18/${lookup.lat}/${lookup.lng}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="underline underline-offset-4"
-                  style={{ color: '#1d4ed8' }}
+                  className="link"
                 >
                   Check the pin
                 </a>
               </>
             )}
           </p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Left blank, they&apos;re looked up from the address on save. Without
             coordinates the location won&apos;t show on the map.
           </p>

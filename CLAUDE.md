@@ -143,19 +143,29 @@ No `NEXT_PUBLIC_*` vars — nothing client-side needs config.
 - **Mobile first.** Every component starts at 320px and scales up.
 - **Breakpoint:** 768px for desktop layout (sidebar + map).
 - **Colors:** white/grey/black base. `#3a7d44` accent used sparingly.
-- **Links:** blue `#1d4ed8` + underline (Tailwind preflight strips both — set them explicitly).
-- **No red** anywhere — colorblind accessibility.
-- **Destructive actions** use dark/black styling, never red.
+- **Links:** blue `#1d4ed8` + underline — use the `.link` class (`app/globals.css`, token `--link`); never inline the hex.
+- **No red** anywhere, pins included — colorblind accessibility. `--destructive` is near-black.
+- **Destructive actions** use dark/black styling (`variant="destructive"`) behind a confirm: `ConfirmButton` /
+  `ConfirmDialog` (`components/ui/confirm-button.tsx`, shadcn AlertDialog). Never native `confirm()`.
+- **Never color alone:** categories carry a glyph (`components/locations/category-icon.tsx`) + label; errors and
+  successes carry an icon (`FieldError` / `FormStatus` in `components/ui/field-error.tsx`).
+- **Touch targets ≥44px:** `Button`/`Input` default to `h-11`; standalone links get `inline-flex min-h-11 items-center`.
+  Inputs are 16px on mobile (iOS zooms on smaller). Never remove a focus ring without a replacement.
+- **Colors live in tokens** (`app/globals.css` + `tailwind.config.ts`: `link`, `brand`, `muted-foreground`, …),
+  not raw hex in components. Category colors are the exception: `CATEGORY_COLORS` / `CATEGORY_ON_COLORS` in `lib/locations.ts`.
 - **Typography:** clean, no decorative fonts in UI.
 - Less is more. No over-polished AI aesthetic.
 
 ### Pin colors
 
-| Category                    | Color            |
-| --------------------------- | ---------------- |
-| Community Garden            | `#3a7d44` green  |
-| Urban Farm                  | `#c0392b` red    |
-| Farmers Market / Farm Stand | `#7b2d8b` purple |
+| Category                    | Color            | Glyph (lucide)   | Text on fill |
+| --------------------------- | ---------------- | ---------------- | ------------ |
+| Community Garden            | `#3a7d44` green  | `Leaf`           | white        |
+| Urban Farm                  | `#d97706` amber  | `Tractor`        | dark         |
+| Farmers Market / Farm Stand | `#7b2d8b` purple | `ShoppingBasket` | white        |
+
+Amber replaced red (`#c0392b`): it differs from the green in lightness, so the two stay apart under
+protan/deutan simulation. White text on amber fails contrast — use `CATEGORY_ON_COLORS`.
 
 ---
 
@@ -294,7 +304,8 @@ No `NEXT_PUBLIC_*` vars — nothing client-side needs config.
 - [x] Archive / restore location (#31) — status filter on `/locations` for editors/owners (`getManagedLocations`, via RLS); status changes in the edit form
 - [x] Image upload (#32) — profile image on Cloudflare R2 (`location_files`, browser-scaled, presigned PUT)
 - [ ] R2 custom domain (e.g. files.clevelandfoodsystem.land) instead of the r2.dev URL — env change only
-- [ ] Form validation — client and Supabase (#33)
+- [ ] Form validation — client and Supabase (#33) — UX half done in the UX audit PR: field errors with icon +
+  `aria-invalid`/`aria-describedby`, focus first invalid field, input kept on error, unsaved-changes guard
 - [ ] Mobile-first admin layout (#34)
 
 ---

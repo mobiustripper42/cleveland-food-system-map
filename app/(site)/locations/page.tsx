@@ -37,7 +37,7 @@ export default function LocationsPage({
       {/* searchParams is request data: read it under Suspense so the heading
           stays in the static shell. */}
       <Suspense
-        fallback={<p className="px-3 py-8 text-neutral-600">Loading…</p>}
+        fallback={<p className="px-3 py-8 text-muted-foreground">Loading…</p>}
       >
         <Browser searchParams={searchParams} />
       </Suspense>

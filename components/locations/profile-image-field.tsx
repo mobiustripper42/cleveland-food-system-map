@@ -1,7 +1,8 @@
 'use client';
 
-import { useRef, useState, useTransition } from 'react';
-import { Button } from '@/components/ui/button';
+import { useEffect, useRef, useState, useTransition } from 'react';
+import { ConfirmButton } from '@/components/ui/confirm-button';
+import { FormStatus } from '@/components/ui/field-error';
 import { Label } from '@/components/ui/label';
 import {
   finishProfileUpload,
@@ -89,10 +90,21 @@ export function ProfileImageField({
   const inputRef = useRef<HTMLInputElement>(null);
   const [pending, startTransition] = useTransition();
   const [step, setStep] = useState('');
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState<{
+    tone: 'success' | 'error';
+    text: string;
+  } | null>(null);
+  // Local preview of the picked file while it uploads.
+  const [preview, setPreview] = useState<string | null>(null);
+  useEffect(() => {
+    if (!preview) return;
+    return () => URL.revokeObjectURL(preview);
+  }, [preview]);
+  const fail = (text: string) => setMessage({ tone: 'error', text });
 
   function upload(file: File) {
-    setMessage('');
+    setMessage(null);
+    setPreview(URL.createObjectURL(file));
     startTransition(async () => {
       try {
         setStep('Scaling…');
@@ -100,7 +112,7 @@ export function ProfileImageField({
         try {
           scaled = await scaleImage(file);
         } catch {
-          setMessage("Can't read that image. Try a JPEG, PNG, or WebP.");
+          fail("Can't read that image. Try a JPEG, PNG, or WebP.");
           return;
         }
         const { full, thumb } = scaled;
@@ -112,7 +124,7 @@ export function ProfileImageField({
           thumbBytes: thumb.blob.size,
         });
         if (start.status === 'error') {
-          setMessage(start.message);
+          fail(start.message);
           return;
         }
         await Promise.all([
@@ -127,26 +139,36 @@ export function ProfileImageField({
           width: full.width,
           height: full.height,
         });
-        setMessage(done.status === 'idle' ? '' : done.message);
+        if (done.status === 'error') fail(done.message);
+        else if (done.status === 'done') {
+          setMessage({ tone: 'success', text: done.message });
+        }
       } catch {
-        setMessage('Upload failed. Check your connection and try again.');
+        fail('Upload failed. Check your connection and try again.');
       } finally {
         setStep('');
+        setPreview(null);
         if (inputRef.current) inputRef.current.value = '';
       }
     });
   }
 
   function remove() {
-    if (!confirm(`Remove the photo for ${locationName}?`)) return;
-    setMessage('');
+    setMessage(null);
     startTransition(async () => {
       setStep('Removing…');
       const res = await removeProfileImage(locationId);
       setStep('');
-      setMessage(res.status === 'idle' ? '' : res.message);
+      if (res.status === 'error') fail(res.message);
+      else if (res.status === 'done') {
+        setMessage({ tone: 'success', text: res.message });
+      }
+      // The Remove button is gone now; keep focus in the section.
+      inputRef.current?.focus();
     });
   }
+
+  const shown = preview ?? image?.image_url ?? null;
 
   return (
     <section aria-labelledby="photo-heading" className="flex flex-col gap-3">
@@ -160,21 +182,32 @@ export function ProfileImageField({
         </p>
       </div>
 
-      {image?.image_url && (
-        <img
-          src={image.image_url}
-          alt={`Current photo of ${locationName}`}
-          width={image.width ?? undefined}
-          height={image.height ?? undefined}
-          className="aspect-[4/3] w-full max-w-sm rounded-md border border-neutral-200 object-cover"
-        />
-      )}
+      {/* The 4/3 box is always there, so adding a first photo doesn't shift the page. */}
+      <div className="relative aspect-[4/3] w-full max-w-sm overflow-hidden rounded-md border border-border bg-muted">
+        {shown ? (
+          <img
+            src={shown}
+            alt={
+              preview
+                ? `New photo of ${locationName} (uploading)`
+                : `Current photo of ${locationName}`
+            }
+            width={preview ? undefined : (image?.width ?? undefined)}
+            height={preview ? undefined : (image?.height ?? undefined)}
+            className={`size-full object-cover ${preview ? 'opacity-60' : ''}`}
+          />
+        ) : (
+          <p className="flex size-full items-center justify-center p-4 text-center text-sm text-muted-foreground">
+            No photo yet
+          </p>
+        )}
+      </div>
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="profile-image">
           {image ? 'Replace photo' : 'Add a photo'}
         </Label>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
           <input
             ref={inputRef}
             id="profile-image"
@@ -185,24 +218,24 @@ export function ProfileImageField({
               const file = e.currentTarget.files?.[0];
               if (file) upload(file);
             }}
-            className="text-sm file:mr-3 file:rounded-md file:border file:border-neutral-300 file:bg-white file:px-3 file:py-1.5 file:text-sm"
+            className="cursor-pointer text-base file:mr-3 file:h-11 file:cursor-pointer file:rounded-md file:border file:border-input file:bg-background file:px-4 file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:text-sm"
           />
           {image && (
-            <Button
-              type="button"
+            <ConfirmButton
               size="sm"
-              variant="outline"
               disabled={pending}
-              onClick={remove}
               className="sm:w-auto"
+              title={`Remove the photo for ${locationName}?`}
+              description="It comes off the map and the location page."
+              onConfirm={remove}
             >
               Remove photo
-            </Button>
+            </ConfirmButton>
           )}
         </div>
-        <p role="status" className="text-sm">
-          {step || message}
-        </p>
+        <FormStatus tone={step ? 'info' : message?.tone}>
+          {step || message?.text}
+        </FormStatus>
       </div>
     </section>
   );

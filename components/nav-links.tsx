@@ -6,12 +6,12 @@ import { Suspense } from 'react';
 
 const LINKS = [
   { href: '/', label: 'Map' },
-  { href: '/locations', label: 'List' },
+  { href: '/locations', label: 'All locations' },
 ];
 
 function Links({ pathname }: { pathname: string | null }) {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-x-4">
       {LINKS.map(({ href, label }) => {
         const current =
           pathname !== null &&
@@ -23,10 +23,9 @@ function Links({ pathname }: { pathname: string | null }) {
             aria-current={current ? 'page' : undefined}
             className={
               current
-                ? 'font-semibold text-neutral-900 no-underline'
-                : 'underline underline-offset-4'
+                ? 'inline-flex min-h-11 items-center whitespace-nowrap font-semibold text-foreground no-underline'
+                : 'link inline-flex min-h-11 items-center whitespace-nowrap'
             }
-            style={current ? undefined : { color: '#1d4ed8' }}
           >
             {label}
           </Link>

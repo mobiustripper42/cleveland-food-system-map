@@ -61,8 +61,18 @@ export function browseQuery({
   return s ? `?${s}` : '';
 }
 
-/** Name-only, case-insensitive match. */
-export function matchesName(name: string, q: string): boolean {
+/**
+ * Case-insensitive match on name or notes. One rule for the map and the
+ * list, so the same search finds the same places on both.
+ */
+export function matchesQuery(
+  l: { name: string; notes: string | null },
+  q: string,
+): boolean {
   const needle = q.trim().toLowerCase();
-  return !needle || name.toLowerCase().includes(needle);
+  return (
+    !needle ||
+    l.name.toLowerCase().includes(needle) ||
+    (l.notes ?? '').toLowerCase().includes(needle)
+  );
 }

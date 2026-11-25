@@ -1,8 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { startTransition, useActionState, useState } from 'react';
+import {
+  startTransition,
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { Button } from '@/components/ui/button';
+import { FormStatus } from '@/components/ui/field-error';
+import { focusFirstInvalid } from '@/hooks/use-unsaved-changes-guard';
 import {
   createLocation,
   type CreateLocationState,
@@ -37,6 +45,13 @@ export function LocationForm() {
     { status: 'idle' },
   );
   const errors = state.status === 'error' ? (state.errors ?? {}) : {};
+  const formRef = useRef<HTMLFormElement>(null);
+  // Hide the last result once the editor starts on the next one.
+  const [stale, setStale] = useState(false);
+  useEffect(() => {
+    setStale(false);
+    if (state.status === 'error') focusFirstInvalid(formRef.current);
+  }, [state]);
 
   // Submit manually: a plain `action={…}` resets the form after every
   // submit, which would wipe the editor's input on a validation error.
@@ -47,7 +62,12 @@ export function LocationForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-4">
+    <form
+      ref={formRef}
+      onSubmit={onSubmit}
+      onChange={() => setStale(true)}
+      className="flex flex-col gap-4"
+    >
       <LocationFields
         key={formKey}
         defaults={NEW_DEFAULTS}
@@ -58,21 +78,20 @@ export function LocationForm() {
         <Button type="submit" disabled={pending}>
           {pending ? 'Creating…' : 'Create location'}
         </Button>
-        <p role="status" className="text-sm">
-          {state.status === 'saved' && (
+        <FormStatus
+          tone={state.status === 'saved' ? 'success' : 'error'}
+          className="flex-1"
+        >
+          {!stale && state.status === 'saved' && (
             <>
               {savedMessage(state)}{' '}
-              <Link
-                href={`/locations/${state.id}/edit`}
-                className="underline underline-offset-4"
-                style={{ color: '#1d4ed8' }}
-              >
+              <Link href={`/locations/${state.id}/edit`} className="link">
                 Add a photo
               </Link>
             </>
           )}
           {state.status === 'error' && state.message}
-        </p>
+        </FormStatus>
       </div>
     </form>
   );
