@@ -66,6 +66,8 @@ const audit = {
 // Signed in != editor: sign-up is open (email code, password, Google, Facebook), so anyone can create a
 // session. Write access and PII require a row in `editors`.
 const isEditor = sql`exists (select 1 from public.editors where user_id = ${currentUserId})`;
+// Same check for policies on editors itself (see editors_admin migration).
+const editorFn = sql`(select public.is_editor())`;
 
 const editorWritePolicies = (table: string) => [
   pgPolicy(`${table}_select_editor`, {
@@ -102,12 +104,31 @@ export const editors = pgTable.withRLS(
     created_at: createdAt(),
   },
   () => [
-    // Read-own-row only; this is what lets `isEditor` resolve inside policies.
-    // Rows are added with `npm run add-editor` (owner role bypasses RLS).
+    // Read-own-row; this is what lets `isEditor` resolve inside other tables'
+    // policies.
     pgPolicy('editors_select_self', {
       for: 'select',
       to: appUser,
       using: sql`user_id = ${currentUserId}`,
+    }),
+    // Editors manage editors (/admin/editors; `npm run add-editor` still works
+    // as owner). Policies here can't subquery editors (infinite recursion), so
+    // they call the security-definer public.is_editor() (editors_admin migration).
+    pgPolicy('editors_select_editor', {
+      for: 'select',
+      to: appUser,
+      using: editorFn,
+    }),
+    pgPolicy('editors_insert_editor', {
+      for: 'insert',
+      to: appUser,
+      withCheck: editorFn,
+    }),
+    // No removing yourself — so the last editor can never be removed.
+    pgPolicy('editors_delete_editor', {
+      for: 'delete',
+      to: appUser,
+      using: sql`${editorFn} and user_id <> ${currentUserId}`,
     }),
   ],
 );
@@ -135,7 +156,11 @@ export const locations = pgTable.withRLS(
     status: locationStatus('status').notNull().default('draft'),
     lat: numeric('lat', { precision: 10, scale: 7, mode: 'number' }),
     lng: numeric('lng', { precision: 10, scale: 7, mode: 'number' }),
-    address: text('address'),
+    // Split address; formatAddress() (lib/address.ts) joins it for display.
+    street: text('street'),
+    city: text('city'),
+    state: text('state'),
+    zip: text('zip'),
     ward: smallint('ward'),
     website: text('website'),
     notes: text('notes'),
@@ -156,6 +181,8 @@ export const locations = pgTable.withRLS(
       sql`(${t.lat} is null) = (${t.lng} is null)`,
     ),
     check('locations_ward_positive', sql`${t.ward} > 0`),
+    check('locations_state_format', sql`${t.state} ~ '^[A-Z]{2}$'`),
+    check('locations_zip_format', sql`${t.zip} ~ '^[0-9]{5}(-[0-9]{4})?$'`),
     check(
       'locations_image_path_relative',
       sql`${t.image_path} !~ '^(/|[a-z]+://)'`,

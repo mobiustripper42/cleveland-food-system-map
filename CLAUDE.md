@@ -38,7 +38,7 @@ Lightweight admin UI for 2–5 authorized editors.
 ├── app/                  # Next.js App Router routes
 │   ├── layout.tsx        # Root layout + site metadata; icon.svg = favicon
 │   ├── (site)/           # Home `/`: layout.tsx = nav + top/footer site sections; page.tsx (server, Drizzle) → MapClient.tsx ('use client'). `/map` 308s here
-│   ├── admin/            # Editors only: index of admin tools; sections/ edits site_sections HTML (server action via asUser)
+│   ├── admin/            # Editors only: index of admin tools; sections/ (site_sections HTML), editors/ (add/remove editors), locations/new/ (create location) — server actions via asUser
 │   ├── login/            # Sign-in / sign-up page (email code default, passkey, password, Google, Facebook)
 │   ├── account/          # Signed-in users: manage passkeys
 │   └── api/auth/[...all]/ # BetterAuth handler (all auth endpoints)
@@ -46,6 +46,9 @@ Lightweight admin UI for 2–5 authorized editors.
 ├── lib/
 │   ├── db/               # Drizzle: schema.ts, auth-schema.ts (BetterAuth tables), index.ts (server-only client), queries.ts
 │   ├── sections.ts       # SECTION_KEYS + sanitize-html allowlist for site_sections (server-only)
+│   ├── locations.ts      # Category/status labels + parseLocationForm (shared client/server validation)
+│   ├── address.ts        # street/city/state/zip helpers: formatAddress, parseOneLineAddress (client/server/scripts)
+│   ├── geocode.ts        # US Census geocoder (free, no key) + Cleveland bbox check — form lookup + import-kml
 │   ├── auth.ts           # BetterAuth server config (server-only)
 │   ├── auth-client.ts    # BetterAuth React client, for 'use client' code
 │   ├── session.ts        # getSession() — the one way server code reads the session
@@ -77,12 +80,12 @@ Source of truth: `lib/db/schema.ts` (Drizzle). Migrations in `drizzle/` — `npm
 
 | Table                                                   | Purpose                                                                                                                             |
 | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `locations`                                             | Public site data. `status` enum `draft \| published \| archived` (default `draft`). `image_path` = path in `location-images` bucket |
+| `locations`                                             | Public site data. `status` enum `draft \| published \| archived` (default `draft`). Address split into `street/city/state/zip`; `image_path` = bucket path |
 | `market_schedules`                                      | Weekday + open/close time + optional season dates, per location                                                                     |
 | `contacts`                                              | Manager name/phone/email — PII, editors only                                                                                        |
 | `location_contacts`                                     | locations ↔ contacts (many-to-many)                                                                                                 |
 | `site_sections`                                         | Editor HTML per page slot (`key` PK: `top`, `footer`). Public read; sanitized on save and render. No delete — empty hides           |
-| `editors`                                               | Allowlist of BetterAuth `user` ids — managed with `npm run add-editor -- <email>`                                                   |
+| `editors`                                               | Allowlist of BetterAuth `user` ids — managed at `/admin/editors` or `npm run add-editor -- <email>`                                 |
 | `user`, `session`, `account`, `verification`, `passkey` | BetterAuth tables (`lib/db/auth-schema.ts`, camelCase TS keys). RLS on, no policies, no grants — server only                        |
 
 - Primary keys are KSUIDs from `public.gen_ksuid()` (DB default)
@@ -96,6 +99,8 @@ RLS (portable — no Supabase roles or `auth.uid()`):
 - Any `app_user`: `locations` where `status = 'published'`, and their schedules
 - Editors (row in `editors`): read all, insert/update everything; delete schedules/contacts/links
 - Nobody can delete `locations` — archive instead
+- Editors read/insert/delete `editors` via security-definer `public.is_editor()` (a policy on `editors` can't
+  subquery itself). Delete excludes your own row, so the last editor can't be removed
 - Signed in ≠ editor: OAuth lets anyone create a user
 - `anon`/`authenticated` have no grants on `public` — Supabase's Data API is closed; the app never uses it
 - Migration history replays only on Supabase (early migrations reference `auth.users`). To move hosts,
@@ -150,7 +155,8 @@ No `NEXT_PUBLIC_*` vars — nothing client-side needs config.
 - Server: `getSession()` from `lib/session.ts`. Client: `authClient` from `lib/auth-client.ts`
 - Protected routes redirect unauthenticated users to `/login`. The proxy cookie check is optimistic —
   always verify with `getSession()` in the page/action
-- Editor management: `npm run add-editor -- <email>` — no custom invite UI
+- Editor management: `/admin/editors` (by email; creates a verified user if missing, via `lib/db/users.ts`)
+  or `npm run add-editor -- <email>`. No invite email is sent
 - Never roll custom auth logic
 
 ---
@@ -158,7 +164,9 @@ No `NEXT_PUBLIC_*` vars — nothing client-side needs config.
 ## Data Rules
 
 - `status = 'published'` is the public filter — never hard delete; archive with `status = 'archived'`
-- KML import script lives in `scripts/import-kml.ts` — upserts on name + lat + lng
+- KML import script lives in `scripts/import-kml.ts` — upserts on name + lat + lng; one-line KML addresses split via `parseOneLineAddress`
+- Address is stored split (`street`, `city`, `state`, `zip`); public queries join it into one `address` string with `formatAddress`
+- Geocoding: `lib/geocode.ts` (Census, US only, misses bare place names). Admin form looks it up on demand and on save when coordinates are blank — editor-gated so we're not an open geocoding proxy
 - Single hero image per location stored in Supabase Storage bucket `location-images`
 - Storage object path stored as `image_path`; public URL built server-side in `lib/db/queries.ts`
 - Read data via Drizzle on the server (`lib/db`), not supabase-js. `DATABASE_URL` bypasses RLS —
@@ -256,7 +264,7 @@ No `NEXT_PUBLIC_*` vars — nothing client-side needs config.
 - [x] Auth flow — email code (default), passkey, password, Google, Facebook (#26) — BetterAuth
 - [x] Protected route — redirect unauthenticated to /login (#27)
 - [ ] Admin location list view (#28)
-- [ ] Add location form (#29)
+- [x] Add location form (#29) — `/admin/locations/new`
 - [ ] Edit location form (#30)
 - [ ] Archive / restore location (#31)
 - [ ] Image upload (#32) — removed in the BetterAuth switch; redo on Cloudflare R2

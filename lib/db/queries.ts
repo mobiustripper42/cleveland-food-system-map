@@ -2,6 +2,7 @@ import 'server-only';
 import { and, asc, eq } from 'drizzle-orm';
 import { cacheLife, cacheTag } from 'next/cache';
 import { cache } from 'react';
+import { formatAddress } from '@/lib/address';
 import { getSession } from '@/lib/session';
 import { db } from './index';
 import {
@@ -11,6 +12,7 @@ import {
   locations,
   marketSchedules,
   siteSections,
+  user,
 } from './schema';
 import {
   isSectionKey,
@@ -43,7 +45,10 @@ export async function getPublishedLocations() {
         category: locations.category,
         lat: locations.lat,
         lng: locations.lng,
-        address: locations.address,
+        street: locations.street,
+        city: locations.city,
+        state: locations.state,
+        zip: locations.zip,
         website: locations.website,
         notes: locations.notes,
         image_path: locations.image_path,
@@ -68,8 +73,9 @@ export async function getPublishedLocations() {
       .orderBy(asc(marketSchedules.day_of_week), asc(marketSchedules.opens_at)),
   ]);
 
-  return rows.map(({ image_path, ...loc }) => ({
+  return rows.map(({ image_path, street, city, state, zip, ...loc }) => ({
     ...loc,
+    address: formatAddress({ street, city, state, zip }),
     image_url: image_path ? locationImageUrl(image_path) : null,
     schedules: schedules.filter((s) => s.location_id === loc.id),
   }));
@@ -165,4 +171,19 @@ export async function getEditorContacts() {
     (byLocation[location_id] ??= []).push(contact);
   }
   return byLocation;
+}
+
+/** Editors with their account name/email, or null unless an editor. */
+export async function getEditors() {
+  if (!(await isEditor())) return null;
+  return db
+    .select({
+      user_id: editors.user_id,
+      name: user.name,
+      email: user.email,
+      created_at: editors.created_at,
+    })
+    .from(editors)
+    .innerJoin(user, eq(editors.user_id, user.id))
+    .orderBy(asc(user.email));
 }
