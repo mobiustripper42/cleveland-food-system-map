@@ -12,8 +12,8 @@
  * Placemarks without <coordinates> (the markets) are geocoded from their
  * address via the US Census geocoder — once: later runs reuse the stored pin,
  * so editor corrections stick.
- * Re-imports never touch `status` or `image_path` on existing locations, so
- * editor archiving and uploaded images survive.
+ * Re-imports never touch `status` on existing locations (so editor archiving
+ * survives) or `location_files` (uploaded images).
  */
 
 import * as fs from 'node:fs';

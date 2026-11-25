@@ -46,9 +46,9 @@ export function LocationTile({
       className="relative flex flex-col overflow-hidden rounded-md border border-neutral-200 bg-white border-t-4 focus-within:ring-2 focus-within:ring-[#1d4ed8]"
       style={{ borderTopColor: CATEGORY_COLORS[location.category] }}
     >
-      {location.image_url && (
+      {location.thumb_url && (
         <img
-          src={location.image_url}
+          src={location.thumb_url}
           alt=""
           loading="lazy"
           className="aspect-[4/3] w-full object-cover"

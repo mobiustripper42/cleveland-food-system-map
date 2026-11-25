@@ -4,6 +4,7 @@ import { and, eq } from 'drizzle-orm';
 import { refresh, updateTag } from 'next/cache';
 import { type AddressParts, STATE_PATTERN, ZIP_PATTERN } from '@/lib/address';
 import { asUser, db } from '@/lib/db';
+import { pgCode } from '@/lib/db/errors';
 import { canEditLocation, isEditor, LOCATIONS_TAG } from '@/lib/db/queries';
 import { locationOwners, locations } from '@/lib/db/schema';
 import { findOrCreateUserByEmail, normalizeEmail } from '@/lib/db/users';
@@ -31,13 +32,6 @@ export type CreateLocationState =
       message: string;
       errors?: Partial<Record<LocationField, string>>;
     };
-
-// Postgres error codes surfaced through postgres-js (possibly wrapped by Drizzle).
-function pgCode(err: unknown): { code?: string; constraint?: string } {
-  const e = err as { code?: string; constraint_name?: string; cause?: unknown };
-  if (e?.code) return { code: e.code, constraint: e.constraint_name };
-  return e?.cause ? pgCode(e.cause) : {};
-}
 
 type ErrorState = Extract<CreateLocationState, { status: 'error' }>;
 

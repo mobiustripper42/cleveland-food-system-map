@@ -5,6 +5,7 @@ import {
   LocationEditForm,
   LocationOwners,
 } from '@/components/locations/location-edit-form';
+import { ProfileImageField } from '@/components/locations/profile-image-field';
 import { getLocationForEdit } from '@/lib/db/queries';
 import { getSession } from '@/lib/session';
 
@@ -39,11 +40,17 @@ async function Gate({ params }: { params: Params }) {
   if (!(await getSession())) redirect('/login');
   const data = await getLocationForEdit(id);
   if (!data) notFound();
-  const { location, editor, owners } = data;
+  const { location, image, editor, owners } = data;
 
   return (
     <>
       <h1 className="text-2xl font-semibold">Edit {location.name}</h1>
+      <ProfileImageField
+        locationId={location.id}
+        locationName={location.name}
+        image={image}
+      />
+      <hr className="border-foreground/10" />
       <LocationEditForm location={location} editor={editor} />
       {owners && (
         <>
