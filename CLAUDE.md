@@ -43,7 +43,11 @@ Lightweight admin UI for 2–5 authorized editors.
 │   ├── account/          # Signed-in users: manage passkeys
 │   └── api/auth/[...all]/ # BetterAuth handler (all auth endpoints)
 ├── components/           # shadcn components + login form, auth/logout buttons
+│   └── map/              # map-view (Leaflet), location-panel, category-filter, search-bar — client-only, via MapClient
+├── hooks/                # use-is-desktop (SSR-safe)
 ├── lib/
+│   ├── types.ts          # Shared TypeScript types (derived from Drizzle schema/queries)
+│   ├── geo.ts            # LatLng/UserPosition, haversine distanceMiles, formatMiles
 │   ├── db/               # Drizzle: schema.ts, auth-schema.ts (BetterAuth tables), index.ts (server-only client), queries.ts
 │   ├── sections.ts       # SECTION_KEYS + sanitize-html allowlist for site_sections (server-only)
 │   ├── locations.ts      # Category/status labels + parseLocationForm (shared client/server validation)
@@ -55,11 +59,6 @@ Lightweight admin UI for 2–5 authorized editors.
 │   ├── email.ts          # Resend sender (one-time codes)
 │   └── utils.ts
 ├── proxy.ts              # Next 16 proxy (formerly middleware) — default-deny, optimistic session-cookie check
-├── src/                  # Legacy Vite-era code, still imported by app/(site)
-│   ├── components/       # MapView, CategoryFilter, SearchBar, LocationPanel
-│   ├── hooks/            # useIsDesktop (SSR-safe)
-│   ├── lib/
-│   │   └── types.ts      # Shared TypeScript types (derived from Drizzle schema/queries)
 ├── scripts/
 │   ├── import-kml.ts     # KML import tool — permanent, not throwaway
 │   └── add-editor.ts     # Grant editor access by email
@@ -68,7 +67,7 @@ Lightweight admin UI for 2–5 authorized editors.
 └── .env.example
 ```
 
-Import alias: `@/*` → repo root (e.g. `@/src/components/MapView`, `@/lib/auth-client`).
+Import alias: `@/*` → repo root (e.g. `@/components/map/map-view`, `@/lib/auth-client`).
 `lib/db/schema.ts` imports with `.ts` extensions so `scripts/` can run it under plain Node.
 
 ---
@@ -90,7 +89,7 @@ Source of truth: `lib/db/schema.ts` (Drizzle). Migrations in `drizzle/` — `npm
 
 - Primary keys are KSUIDs from `public.gen_ksuid()` (DB default)
 - `created_at/by`, `updated_at/by` are set by the `set_audit_fields` trigger; client values are ignored
-- Snake_case TS keys on app tables (types derive from them in `src/lib/types.ts`)
+- Snake_case TS keys on app tables (types derive from them in `lib/types.ts`)
 - `*_by` and `editors.user_id` are `text` FKs to `user.id`. Supabase-era users were migrated with ids kept
 
 RLS (portable — no Supabase roles or `auth.uid()`):
@@ -256,7 +255,7 @@ No `NEXT_PUBLIC_*` vars — nothing client-side needs config.
 - [x] Replace starter auth with BetterAuth (folds into #26/#27)
 - [x] Map reads via Drizzle in a server component; `src/lib/supabase.ts` + `useLocations` removed
 - [x] `/map` layout with nav + auth button; `/map` public in proxy allowlist
-- [ ] Move `src/` code into Next layout once stable
+- [x] `src/` folded into `components/map/`, `hooks/`, `lib/`
 - [ ] Update Vercel project framework preset + env vars
 
 **Phase 4 — Admin UI** (paused until migration lands)
@@ -300,7 +299,7 @@ Critical errors (unrecognized category) skip that record. Warnings (missing coor
   `next/dynamic` with `ssr: false` — say which in the prompt
 - `cacheComponents` keeps left routes alive in a hidden `<Activity>`: effects tear down on navigate-away
   and re-run on return, state and DOM persist. Imperative libs (Leaflet) must survive that — see
-  `useFreshInstance` in `src/components/MapView.tsx`
+  `useFreshInstance` in `components/map/map-view.tsx`
 - Server vs browser auth matters: `getSession()` (`lib/session.ts`) in server components/actions,
   `authClient` (`lib/auth-client.ts`) in `'use client'` code
 

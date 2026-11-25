@@ -5,7 +5,7 @@
  * of the client bundle.
  */
 import type { locations, locationStatus } from '@/lib/db/schema';
-import type { Category } from '@/src/lib/types';
+import type { Category } from '@/lib/types';
 import { STATE_PATTERN, ZIP_PATTERN } from './address';
 
 export type LocationStatus = (typeof locationStatus.enumValues)[number];
