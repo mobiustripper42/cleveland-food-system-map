@@ -251,7 +251,7 @@ No `NEXT_PUBLIC_*` vars — nothing client-side needs config.
 - [x] `import-kml` restored on the Drizzle schema — `npm run import-kml` (Node runs the .ts directly; needs `DATABASE_URL`)
 - [x] Map is the home page `/` (`app/(site)/`); `/map` → `/` (308 in `next.config.ts`)
 - [x] `site_sections` table + `/admin/sections` editor — top and footer HTML above/below the map
-- [ ] Replace starter metadata in `app/layout.tsx`; drop starter home/hero/deploy components
+- [x] Starter leftovers removed (Supabase OG image, next-themes/dark mode, unused shadcn components); metadataBase → production URL
 - [x] Replace starter auth with BetterAuth (folds into #26/#27)
 - [x] Map reads via Drizzle in a server component; `src/lib/supabase.ts` + `useLocations` removed
 - [x] `/map` layout with nav + auth button; `/map` public in proxy allowlist
