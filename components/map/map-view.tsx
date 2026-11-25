@@ -11,6 +11,7 @@ import {
   useMapEvents,
 } from 'react-leaflet';
 import type { UserPosition } from '@/lib/geo';
+import { CATEGORY_COLORS, CATEGORY_LABELS } from '@/lib/locations';
 import type { Category, Location } from '@/lib/types';
 
 function ZoomControl() {
@@ -182,21 +183,9 @@ const zoomStyles: Record<string, React.CSSProperties> = {
   },
 };
 
-const CATEGORY_COLOR: Record<Category, string> = {
-  garden: '#3a7d44',
-  farm: '#c0392b',
-  market: '#7b2d8b',
-};
-
-const CATEGORY_LABEL: Record<Category, string> = {
-  garden: 'Community Garden',
-  farm: 'Urban Farm',
-  market: 'Farmers Market / Farm Stand',
-};
-
 function makePinIcon(category: Category): DivIcon {
-  const color = CATEGORY_COLOR[category];
-  const label = CATEGORY_LABEL[category];
+  const color = CATEGORY_COLORS[category];
+  const label = CATEGORY_LABELS[category];
   // Teardrop: circle body tapering to a downward point
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 32" width="24" height="32" role="img" aria-label="${label}">` +
@@ -233,8 +222,7 @@ function useFreshInstance() {
   const view = useRef<View>({ center: CLEVELAND, zoom: DEFAULT_ZOOM });
   const [instance, setInstance] = useState({ key: 0, ...view.current });
   useLayoutEffect(
-    () => () =>
-      setInstance((i) => ({ key: i.key + 1, ...view.current })),
+    () => () => setInstance((i) => ({ key: i.key + 1, ...view.current })),
     [],
   );
   return { ...instance, view };
@@ -313,7 +301,7 @@ export default function MapView({
             position={[loc.lat as number, loc.lng as number]}
             icon={PIN_ICONS[loc.category]}
             title={loc.name}
-            alt={`${CATEGORY_LABEL[loc.category]}: ${loc.name}`}
+            alt={`${CATEGORY_LABELS[loc.category]}: ${loc.name}`}
             eventHandlers={{ click: () => onSelectLocation(loc) }}
           />
         ))}

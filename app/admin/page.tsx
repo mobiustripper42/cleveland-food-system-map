@@ -46,16 +46,6 @@ async function AdminLinks() {
       </li>
       <li>
         <Link
-          href="/admin/locations/new"
-          className="underline underline-offset-4"
-          style={linkStyle}
-        >
-          Add location
-        </Link>
-        <p className="text-sm">Create a garden, farm, or market.</p>
-      </li>
-      <li>
-        <Link
           href="/admin/editors"
           className="underline underline-offset-4"
           style={linkStyle}

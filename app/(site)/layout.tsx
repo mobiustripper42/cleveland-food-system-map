@@ -1,4 +1,5 @@
 import { AuthButton } from '@/components/auth-button';
+import { NavLinks } from '@/components/nav-links';
 import { SiteSection } from '@/components/site-section';
 import { getSiteSections } from '@/lib/db/queries';
 import Link from 'next/link';
@@ -17,9 +18,10 @@ export default async function SiteLayout({
     <div className="min-h-dvh flex flex-col">
       <nav className="shrink-0 w-full flex justify-center border-b border-b-foreground/10 h-14">
         <div className="w-full flex justify-between items-center gap-3 px-4 text-sm">
-          <Link href={'/'} className="font-semibold truncate">
+          <Link href={'/'} className="font-semibold truncate min-w-0">
             Cleveland Food System Map
           </Link>
+          <NavLinks />
           <Suspense>
             <AuthButton />
           </Suspense>

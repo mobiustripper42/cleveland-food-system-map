@@ -37,20 +37,26 @@ Lightweight admin UI for 2–5 authorized editors.
 /
 ├── app/                  # Next.js App Router routes
 │   ├── layout.tsx        # Root layout + site metadata; icon.svg = favicon
-│   ├── (site)/           # Home `/`: layout.tsx = nav + top/footer site sections; page.tsx (server, Drizzle) → MapClient.tsx ('use client'). `/map` 308s here
-│   ├── admin/            # Editors only: index of admin tools; sections/ (site_sections HTML), editors/ (add/remove editors), locations/new/ (create location) — server actions via asUser
+│   ├── (site)/           # Home `/`: layout.tsx = nav + top/footer site sections; page.tsx (server, Drizzle) → MapClient.tsx ('use client'). `/map` 308s here; `/?location=<id>` opens that panel
+│   │   └── locations/    # Public browse: page.tsx (tiles/list, category + name filter, URL state via lib/browse.ts); [id]/ = per-location page (prerendered, metadata, JSON-LD); new/ = editor-only create (button on the list), actions.ts = location server actions (asUser)
+│   ├── sitemap.ts, robots.ts # / + /locations + every published /locations/<id>
+│   ├── admin/            # Editors only: index of admin tools; sections/ (site_sections HTML), editors/ (add/remove editors) — server actions via asUser
 │   ├── login/            # Sign-in / sign-up page (email code default, passkey, password, Google, Facebook)
 │   ├── account/          # Signed-in users: manage passkeys
 │   └── api/auth/[...all]/ # BetterAuth handler (all auth endpoints)
-├── components/           # shadcn components + login form, auth/logout buttons
-│   └── map/              # map-view (Leaflet), location-panel, category-filter, search-bar — client-only, via MapClient
+├── components/           # shadcn components + login form, auth/logout buttons, nav-links
+│   ├── map/              # map-view (Leaflet), location-panel, category-filter, search-bar — client-only, via MapClient
+│   └── locations/        # location-details (shared by map panel + detail page, no hooks), location-tile (tile/row), locations-browser, location-form (editor create form)
 ├── hooks/                # use-is-desktop (SSR-safe)
 ├── lib/
 │   ├── types.ts          # Shared TypeScript types (derived from Drizzle schema/queries)
 │   ├── geo.ts            # LatLng/UserPosition, haversine distanceMiles, formatMiles
 │   ├── db/               # Drizzle: schema.ts, auth-schema.ts (BetterAuth tables), index.ts (server-only client), queries.ts
 │   ├── sections.ts       # SECTION_KEYS + sanitize-html allowlist for site_sections (server-only)
-│   ├── locations.ts      # Category/status labels + parseLocationForm (shared client/server validation)
+│   ├── locations.ts      # CATEGORIES, category labels/colors, status labels + parseLocationForm (shared client/server validation)
+│   ├── format.ts         # schedule/time/phone formatters, directionsUrl
+│   ├── browse.ts         # /locations URL state: parseBrowseParams, browseQuery, matchesName
+│   ├── site-url.ts       # SITE_URL (absolute origin from Vercel env) — metadataBase, sitemap, robots
 │   ├── address.ts        # street/city/state/zip helpers: formatAddress, parseOneLineAddress (client/server/scripts)
 │   ├── geocode.ts        # US Census geocoder (free, no key) + Cleveland bbox check — form lookup + import-kml
 │   ├── auth.ts           # BetterAuth server config (server-only)
@@ -262,8 +268,8 @@ No `NEXT_PUBLIC_*` vars — nothing client-side needs config.
 
 - [x] Auth flow — email code (default), passkey, password, Google, Facebook (#26) — BetterAuth
 - [x] Protected route — redirect unauthenticated to /login (#27)
-- [ ] Admin location list view (#28)
-- [x] Add location form (#29) — `/admin/locations/new`
+- [x] Location list view (#28) — made public at `/locations` (+ `/locations/[id]`, sitemap); admin can reuse its components with a status filter
+- [x] Add location form (#29) — `/locations/new`, editor-only "New location" button on `/locations` (old `/admin/locations/new` 308s)
 - [ ] Edit location form (#30)
 - [ ] Archive / restore location (#31)
 - [ ] Image upload (#32) — removed in the BetterAuth switch; redo on Cloudflare R2
@@ -300,6 +306,8 @@ Critical errors (unrecognized category) skip that record. Warnings (missing coor
 - `cacheComponents` keeps left routes alive in a hidden `<Activity>`: effects tear down on navigate-away
   and re-run on return, state and DOM persist. Imperative libs (Leaflet) must survive that — see
   `useFreshInstance` in `components/map/map-view.tsx`
+- Build prerenders every `/locations/[id]`: the DB pool drops to 1 connection per worker in the build phase
+  (`lib/db/index.ts`) so the session pooler's 15-client cap holds. Don't raise it
 - Server vs browser auth matters: `getSession()` (`lib/session.ts`) in server components/actions,
   `authClient` (`lib/auth-client.ts`) in `'use client'` code
 

@@ -9,8 +9,12 @@ import postgres from 'postgres';
 const globalForDb = globalThis as { pgClient?: postgres.Sql };
 
 // Reuse across dev HMR reloads instead of leaking a pool per edit.
+// Build prerenders every /locations/[id] across many workers; one connection
+// each keeps a session-mode pooler (Supabase: 15 clients) from running out.
+const isBuild = process.env.NEXT_PHASE === 'phase-production-build';
 const client = (globalForDb.pgClient ??= postgres(process.env.DATABASE_URL!, {
   prepare: false,
+  max: isBuild ? 1 : 10,
 }));
 
 export const db = drizzle({ client });
