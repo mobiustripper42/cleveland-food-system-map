@@ -14,7 +14,7 @@ import { authClient } from '@/lib/auth-client';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
-const CALLBACK_URL = '/map';
+const CALLBACK_URL = '/';
 // BetterAuth appends ?error=<code> here when an OAuth flow fails.
 const ERROR_URL = '/login';
 

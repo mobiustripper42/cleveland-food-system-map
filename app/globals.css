@@ -66,3 +66,42 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Editor-authored HTML from site_sections. Preflight strips element styles,
+   so restore a small, plain set here. */
+@layer components {
+  .site-section {
+    @apply text-sm leading-relaxed;
+  }
+  .site-section > * + * {
+    @apply mt-3;
+  }
+  .site-section h2 {
+    @apply text-xl font-semibold;
+  }
+  .site-section h3 {
+    @apply text-lg font-semibold;
+  }
+  .site-section h4 {
+    @apply font-semibold;
+  }
+  .site-section ul {
+    @apply list-disc pl-5;
+  }
+  .site-section ol {
+    @apply list-decimal pl-5;
+  }
+  .site-section a {
+    color: #1d4ed8;
+    @apply underline underline-offset-4;
+  }
+  .site-section blockquote {
+    @apply border-l-4 border-foreground/20 pl-3;
+  }
+  .site-section hr {
+    @apply border-foreground/10;
+  }
+  .site-section img {
+    @apply max-w-full h-auto;
+  }
+}

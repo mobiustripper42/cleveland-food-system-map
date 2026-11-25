@@ -12,7 +12,7 @@ export default function AccountPage() {
     <div className="mx-auto flex w-full max-w-md flex-col gap-6 p-4 md:p-10">
       <div>
         <Link
-          href="/map"
+          href="/"
           className="text-sm underline underline-offset-4"
           style={{ color: '#1d4ed8' }}
         >

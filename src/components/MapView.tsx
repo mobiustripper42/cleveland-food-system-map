@@ -223,7 +223,7 @@ const DEFAULT_ZOOM = 12;
 
 type View = { center: LatLngTuple; zoom: number };
 
-// With cacheComponents, Next keeps /map mounted in a hidden <Activity> when
+// With cacheComponents, Next keeps the map page mounted in a hidden <Activity> when
 // you navigate away, tearing down effects and re-running them on return.
 // react-leaflet's MapContainer can't survive that: its cleanup removes the
 // Leaflet map, and on return it never builds a new one (the map vanished and

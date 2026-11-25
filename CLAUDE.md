@@ -37,20 +37,22 @@ Lightweight admin UI for 2–5 authorized editors.
 /
 ├── app/                  # Next.js App Router routes
 │   ├── layout.tsx        # Root layout + site metadata; icon.svg = favicon
-│   ├── map/              # Public map: page.tsx (server, Drizzle) → MapClient.tsx ('use client'); layout.tsx nav; actions.ts server actions
+│   ├── (site)/           # Home `/`: layout.tsx = nav + top/footer site sections; page.tsx (server, Drizzle) → MapClient.tsx ('use client'). `/map` 308s here
+│   ├── admin/            # Editors only: index of admin tools; sections/ edits site_sections HTML (server action via asUser)
 │   ├── login/            # Sign-in / sign-up page (email code default, passkey, password, Google, Facebook)
 │   ├── account/          # Signed-in users: manage passkeys
 │   └── api/auth/[...all]/ # BetterAuth handler (all auth endpoints)
 ├── components/           # shadcn components + login form, auth/logout buttons
 ├── lib/
 │   ├── db/               # Drizzle: schema.ts, auth-schema.ts (BetterAuth tables), index.ts (server-only client), queries.ts
+│   ├── sections.ts       # SECTION_KEYS + sanitize-html allowlist for site_sections (server-only)
 │   ├── auth.ts           # BetterAuth server config (server-only)
 │   ├── auth-client.ts    # BetterAuth React client, for 'use client' code
 │   ├── session.ts        # getSession() — the one way server code reads the session
 │   ├── email.ts          # Resend sender (one-time codes)
 │   └── utils.ts
 ├── proxy.ts              # Next 16 proxy (formerly middleware) — default-deny, optimistic session-cookie check
-├── src/                  # Legacy Vite-era code, still imported by app/map
+├── src/                  # Legacy Vite-era code, still imported by app/(site)
 │   ├── components/       # MapView, CategoryFilter, SearchBar, LocationPanel
 │   ├── hooks/            # useIsDesktop (SSR-safe)
 │   ├── lib/
@@ -79,6 +81,7 @@ Source of truth: `lib/db/schema.ts` (Drizzle). Migrations in `drizzle/` — `npm
 | `market_schedules`                                      | Weekday + open/close time + optional season dates, per location                                                                     |
 | `contacts`                                              | Manager name/phone/email — PII, editors only                                                                                        |
 | `location_contacts`                                     | locations ↔ contacts (many-to-many)                                                                                                 |
+| `site_sections`                                         | Editor HTML per page slot (`key` PK: `top`, `footer`). Public read; sanitized on save and render. No delete — empty hides           |
 | `editors`                                               | Allowlist of BetterAuth `user` ids — managed with `npm run add-editor -- <email>`                                                   |
 | `user`, `session`, `account`, `verification`, `passkey` | BetterAuth tables (`lib/db/auth-schema.ts`, camelCase TS keys). RLS on, no policies, no grants — server only                        |
 
@@ -239,7 +242,8 @@ No `NEXT_PUBLIC_*` vars — nothing client-side needs config.
 - [x] `useIsDesktop` made SSR-safe (defaults to mobile, resolves after mount)
 - [x] Vite leftovers removed (entry files, configs, template CSS/assets, `src/pages-src/`)
 - [x] `import-kml` restored on the Drizzle schema — `npm run import-kml` (Node runs the .ts directly; needs `DATABASE_URL`)
-- [x] `/` → `/map` (307 in `next.config.ts`; starter home page removed)
+- [x] Map is the home page `/` (`app/(site)/`); `/map` → `/` (308 in `next.config.ts`)
+- [x] `site_sections` table + `/admin/sections` editor — top and footer HTML above/below the map
 - [ ] Replace starter metadata in `app/layout.tsx`; drop starter home/hero/deploy components
 - [x] Replace starter auth with BetterAuth (folds into #26/#27)
 - [x] Map reads via Drizzle in a server component; `src/lib/supabase.ts` + `useLocations` removed
