@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { browseQuery, parseBrowseParams } from '@/lib/browse';
 import {
   getEditAccess,
+  getManagedLocations,
   getPublishedLocations,
   isEditor,
 } from '@/lib/db/queries';
@@ -56,12 +57,20 @@ async function NewLocationButton() {
 }
 
 async function Browser({ searchParams }: { searchParams: SearchParams }) {
-  const initial = parseBrowseParams(await searchParams);
+  const [params, published, managed] = await Promise.all([
+    searchParams,
+    getPublishedLocations(),
+    // Drafts/archived the user may edit ([] for most visitors). Awaited so
+    // ?status=draft renders server-side; we're already under Suspense.
+    getManagedLocations(),
+  ]);
+  const initial = parseBrowseParams(params);
   return (
     <LocationsBrowser
       // Remount when a link changes the URL (state is seeded from it once).
       key={browseQuery(initial)}
-      locations={await getPublishedLocations()}
+      locations={published}
+      managed={managed}
       initial={initial}
       // Not awaited: the list renders, Edit links stream in.
       editAccess={getEditAccess()}

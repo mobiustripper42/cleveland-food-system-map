@@ -274,7 +274,7 @@ No `NEXT_PUBLIC_*` vars — nothing client-side needs config.
 - [x] Location list view (#28) — made public at `/locations` (+ `/locations/[id]`, sitemap); admin can reuse its components with a status filter
 - [x] Add location form (#29) — `/locations/new`, editor-only "New location" button on `/locations` (old `/admin/locations/new` 308s)
 - [x] Edit location form (#30) — `/locations/[id]/edit`, Edit links on list tiles/rows + map panel; per-location owners
-- [ ] Archive / restore location (#31)
+- [x] Archive / restore location (#31) — status filter on `/locations` for editors/owners (`getManagedLocations`, via RLS); status changes in the edit form
 - [ ] Image upload (#32) — removed in the BetterAuth switch; redo on Cloudflare R2
 - [ ] Form validation — client and Supabase (#33)
 - [ ] Mobile-first admin layout (#34)

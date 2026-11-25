@@ -31,6 +31,9 @@ export const STATUS_LABELS: Record<LocationStatus, string> = {
   archived: 'Archived',
 };
 
+/** Filter order on /locations. */
+export const STATUSES: LocationStatus[] = ['published', 'draft', 'archived'];
+
 export const LOCATION_FIELDS = [
   'name',
   'category',
