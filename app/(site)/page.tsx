@@ -1,4 +1,8 @@
-import { getEditorContacts, getPublishedLocations } from '@/lib/db/queries';
+import {
+  getEditAccess,
+  getEditorContacts,
+  getPublishedLocations,
+} from '@/lib/db/queries';
 import MapClient from './MapClient';
 
 export default async function HomePage() {
@@ -12,6 +16,8 @@ export default async function HomePage() {
         // Not awaited: the cached map renders immediately and contacts stream in
         // for editors only (read with use() inside LocationPanel).
         contacts={getEditorContacts()}
+        // Same: streams in, shows Edit in the panel for editors and owners.
+        editAccess={getEditAccess()}
       />
     </div>
   );

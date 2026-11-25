@@ -4,7 +4,11 @@ import { Suspense } from 'react';
 import LocationsBrowser from '@/components/locations/locations-browser';
 import { Button } from '@/components/ui/button';
 import { browseQuery, parseBrowseParams } from '@/lib/browse';
-import { getPublishedLocations, isEditor } from '@/lib/db/queries';
+import {
+  getEditAccess,
+  getPublishedLocations,
+  isEditor,
+} from '@/lib/db/queries';
 
 export const metadata: Metadata = {
   title: 'All locations',
@@ -59,6 +63,8 @@ async function Browser({ searchParams }: { searchParams: SearchParams }) {
       key={browseQuery(initial)}
       locations={await getPublishedLocations()}
       initial={initial}
+      // Not awaited: the list renders, Edit links stream in.
+      editAccess={getEditAccess()}
     />
   );
 }

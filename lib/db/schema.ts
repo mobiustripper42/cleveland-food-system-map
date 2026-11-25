@@ -9,6 +9,7 @@
  */
 import { sql } from 'drizzle-orm';
 import {
+  type AnyPgColumn,
   check,
   date,
   index,
@@ -87,6 +88,11 @@ const editorWritePolicies = (table: string) => [
     withCheck: isEditor,
   }),
 ];
+
+// Referenced by name (not the Drizzle table) because locations is declared
+// before location_owners.
+const ownsLocation = (locationId: AnyPgColumn) =>
+  sql`exists (select 1 from public.location_owners o where o.location_id = ${locationId} and o.user_id = ${currentUserId})`;
 
 const editorDeletePolicy = (table: string) =>
   pgPolicy(`${table}_delete_editor`, {
@@ -194,7 +200,57 @@ export const locations = pgTable.withRLS(
       using: sql`${t.status} = 'published'`,
     }),
     ...editorWritePolicies('locations'),
+    // Owners (location_owners) read and edit their own rows. Status changes
+    // stay editor-only: the locations_status_editor_only trigger enforces it,
+    // since a policy can't compare old and new values.
+    pgPolicy('locations_select_owner', {
+      for: 'select',
+      to: appUser,
+      using: ownsLocation(t.id),
+    }),
+    pgPolicy('locations_update_owner', {
+      for: 'update',
+      to: appUser,
+      using: ownsLocation(t.id),
+      withCheck: ownsLocation(t.id),
+    }),
     // No delete policy: set status = 'archived' instead.
+  ],
+);
+
+// Users who may edit one location's content without being editors (e.g. a
+// garden's manager). Managed by editors on /locations/[id]/edit.
+export const locationOwners = pgTable.withRLS(
+  'location_owners',
+  {
+    location_id: text('location_id')
+      .notNull()
+      .references(() => locations.id, { onDelete: 'cascade' }),
+    user_id: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    created_at: createdAt(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.location_id, t.user_id] }),
+    index('location_owners_user_id_idx').on(t.user_id),
+    // Own rows: what lets ownsLocation resolve inside locations' policies.
+    pgPolicy('location_owners_select_self', {
+      for: 'select',
+      to: appUser,
+      using: sql`${t.user_id} = ${currentUserId}`,
+    }),
+    pgPolicy('location_owners_select_editor', {
+      for: 'select',
+      to: appUser,
+      using: isEditor,
+    }),
+    pgPolicy('location_owners_insert_editor', {
+      for: 'insert',
+      to: appUser,
+      withCheck: isEditor,
+    }),
+    editorDeletePolicy('location_owners'),
   ],
 );
 

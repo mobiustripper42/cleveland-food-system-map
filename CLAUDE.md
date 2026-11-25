@@ -38,7 +38,7 @@ Lightweight admin UI for 2–5 authorized editors.
 ├── app/                  # Next.js App Router routes
 │   ├── layout.tsx        # Root layout + site metadata; icon.svg = favicon
 │   ├── (site)/           # Home `/`: layout.tsx = nav + top/footer site sections; page.tsx (server, Drizzle) → MapClient.tsx ('use client'). `/map` 308s here; `/?location=<id>` opens that panel
-│   │   └── locations/    # Public browse: page.tsx (tiles/list, category + name filter, URL state via lib/browse.ts); [id]/ = per-location page (prerendered, metadata, JSON-LD); new/ = editor-only create (button on the list), actions.ts = location server actions (asUser)
+│   │   └── locations/    # Public browse: page.tsx (tiles/list, category + name filter, URL state via lib/browse.ts); [id]/ = per-location page (prerendered, metadata, JSON-LD); [id]/edit/ = edit page (editors + that location's owners; editors also manage owners there); new/ = editor-only create (button on the list), actions.ts = location server actions (asUser)
 │   ├── sitemap.ts, robots.ts # / + /locations + every published /locations/<id>
 │   ├── admin/            # Editors only: index of admin tools; sections/ (site_sections HTML), editors/ (add/remove editors) — server actions via asUser
 │   ├── login/            # Sign-in / sign-up page (email code default, passkey, password, Google, Facebook)
@@ -46,7 +46,7 @@ Lightweight admin UI for 2–5 authorized editors.
 │   └── api/auth/[...all]/ # BetterAuth handler (all auth endpoints)
 ├── components/           # shadcn components + login form, auth/logout buttons, nav-links
 │   ├── map/              # map-view (Leaflet), location-panel, category-filter, search-bar — client-only, via MapClient
-│   └── locations/        # location-details (shared by map panel + detail page, no hooks), location-tile (tile/row), locations-browser, location-form (editor create form)
+│   └── locations/        # location-details (shared by map panel + detail page, no hooks), location-tile (tile/row), locations-browser, location-fields (inputs shared by create + edit), location-form (create), location-edit-form (edit + owners), edit-link (streams per-request edit access)
 ├── hooks/                # use-is-desktop (SSR-safe)
 ├── lib/
 │   ├── types.ts          # Shared TypeScript types (derived from Drizzle schema/queries)
@@ -89,6 +89,7 @@ Source of truth: `lib/db/schema.ts` (Drizzle). Migrations in `drizzle/` — `npm
 | `market_schedules`                                      | Weekday + open/close time + optional season dates, per location                                                                     |
 | `contacts`                                              | Manager name/phone/email — PII, editors only                                                                                        |
 | `location_contacts`                                     | locations ↔ contacts (many-to-many)                                                                                                 |
+| `location_owners`                                       | locations ↔ BetterAuth `user` — non-editors who may edit that location's content (not status). Managed on `/locations/<id>/edit`    |
 | `site_sections`                                         | Editor HTML per page slot (`key` PK: `top`, `footer`). Public read; sanitized on save and render. No delete — empty hides           |
 | `editors`                                               | Allowlist of BetterAuth `user` ids — managed at `/admin/editors` or `npm run add-editor -- <email>`                                 |
 | `user`, `session`, `account`, `verification`, `passkey` | BetterAuth tables (`lib/db/auth-schema.ts`, camelCase TS keys). RLS on, no policies, no grants — server only                        |
@@ -103,6 +104,8 @@ RLS (portable — no Supabase roles or `auth.uid()`):
 - Policies target role `app_user` and read `public.current_user_id()` (the `app.user_id` setting, set by `asUser()`)
 - Any `app_user`: `locations` where `status = 'published'`, and their schedules
 - Editors (row in `editors`): read all, insert/update everything; delete schedules/contacts/links
+- Owners (row in `location_owners`): read + update their own locations; see their own `location_owners` rows. Changing
+  `status` is editor-only — `locations_status_editor_only` trigger (RLS can't compare old/new), applies to `app_user` only
 - Nobody can delete `locations` — archive instead
 - Editors read/insert/delete `editors` via security-definer `public.is_editor()` (a policy on `editors` can't
   subquery itself). Delete excludes your own row, so the last editor can't be removed
@@ -270,7 +273,7 @@ No `NEXT_PUBLIC_*` vars — nothing client-side needs config.
 - [x] Protected route — redirect unauthenticated to /login (#27)
 - [x] Location list view (#28) — made public at `/locations` (+ `/locations/[id]`, sitemap); admin can reuse its components with a status filter
 - [x] Add location form (#29) — `/locations/new`, editor-only "New location" button on `/locations` (old `/admin/locations/new` 308s)
-- [ ] Edit location form (#30)
+- [x] Edit location form (#30) — `/locations/[id]/edit`, Edit links on list tiles/rows + map panel; per-location owners
 - [ ] Archive / restore location (#31)
 - [ ] Image upload (#32) — removed in the BetterAuth switch; redo on Cloudflare R2
 - [ ] Form validation — client and Supabase (#33)
