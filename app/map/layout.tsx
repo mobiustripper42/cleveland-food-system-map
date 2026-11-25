@@ -1,6 +1,4 @@
 import { AuthButton } from '@/components/auth-button';
-import { EnvVarWarning } from '@/components/env-var-warning';
-import { hasEnvVars } from '@/lib/utils';
 import Link from 'next/link';
 import { Suspense } from 'react';
 
@@ -14,13 +12,9 @@ export default function MapLayout({ children }: { children: React.ReactNode }) {
           <Link href={'/'} className="font-semibold truncate">
             Cleveland Food System Map
           </Link>
-          {!hasEnvVars ? (
-            <EnvVarWarning />
-          ) : (
-            <Suspense>
-              <AuthButton />
-            </Suspense>
-          )}
+          <Suspense>
+            <AuthButton />
+          </Suspense>
         </div>
       </nav>
       {children}

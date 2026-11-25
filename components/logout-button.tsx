@@ -1,16 +1,16 @@
 'use client';
 
-import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
+import { authClient } from '@/lib/auth-client';
 import { useRouter } from 'next/navigation';
 
 export function LogoutButton() {
   const router = useRouter();
 
   const logout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push('/auth/login');
+    await authClient.signOut();
+    router.push('/map');
+    router.refresh(); // drop editor-only data rendered for the old session
   };
 
   return <Button onClick={logout}>Logout</Button>;

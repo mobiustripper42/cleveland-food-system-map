@@ -1,6 +1,6 @@
 import 'leaflet/dist/leaflet.css';
-import { useEffect, useState } from 'react';
-import { DivIcon } from 'leaflet';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { DivIcon, type LatLngTuple } from 'leaflet';
 import {
   Circle,
   CircleMarker,
@@ -8,6 +8,7 @@ import {
   TileLayer,
   Marker,
   useMap,
+  useMapEvents,
 } from 'react-leaflet';
 import type { UserPosition } from '../lib/geo';
 import type { Category, Location } from '../lib/types';
@@ -217,7 +218,38 @@ const PIN_ICONS: Record<Category, DivIcon> = {
   market: makePinIcon('market'),
 };
 
-const CLEVELAND: [number, number] = [41.482, -81.668];
+const CLEVELAND: LatLngTuple = [41.482, -81.668];
+const DEFAULT_ZOOM = 12;
+
+type View = { center: LatLngTuple; zoom: number };
+
+// With cacheComponents, Next keeps /map mounted in a hidden <Activity> when
+// you navigate away, tearing down effects and re-running them on return.
+// react-leaflet's MapContainer can't survive that: its cleanup removes the
+// Leaflet map, and on return it never builds a new one (the map vanished and
+// threw "Map container is being reused"). So every teardown bumps a key and
+// the next show mounts a fresh MapContainer, restored to the last pan/zoom.
+function useFreshInstance() {
+  const view = useRef<View>({ center: CLEVELAND, zoom: DEFAULT_ZOOM });
+  const [instance, setInstance] = useState({ key: 0, ...view.current });
+  useLayoutEffect(
+    () => () =>
+      setInstance((i) => ({ key: i.key + 1, ...view.current })),
+    [],
+  );
+  return { ...instance, view };
+}
+
+// Records the current view so a remount can restore it.
+function TrackView({ view }: { view: React.RefObject<View> }) {
+  const map = useMapEvents({
+    moveend: () => {
+      const c = map.getCenter();
+      view.current = { center: [c.lat, c.lng], zoom: map.getZoom() };
+    },
+  });
+  return null;
+}
 
 // Brings a selection into view when it isn't already (e.g. picked from the
 // "nearest" chip rather than by tapping its pin).
@@ -248,14 +280,17 @@ export default function MapView({
   userPosition,
   onLocate,
 }: Props) {
+  const instance = useFreshInstance();
   return (
     <MapContainer
-      center={CLEVELAND}
-      zoom={12}
+      key={instance.key}
+      center={instance.center}
+      zoom={instance.zoom}
       zoomControl={false}
       style={{ flex: 1, minHeight: 0, width: '100%' }}
       aria-label="Map of Cleveland food resources"
     >
+      <TrackView view={instance.view} />
       <div style={zoomStyles.wrap}>
         <ZoomControl />
         <LocateControl position={userPosition} onLocate={onLocate} />

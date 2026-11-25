@@ -1,6 +1,5 @@
 import { Suspense, use, useEffect, useRef } from 'react';
 import useIsDesktop from '../hooks/useIsDesktop';
-import PhotoUpload from './PhotoUpload';
 import { distanceMiles, formatMiles, type UserPosition } from '../lib/geo';
 import type {
   Category,
@@ -116,29 +115,22 @@ function Contacts({
 }
 
 // Everything below the rule is editor-only, labelled as such so editors know
-// the public doesn't see it. Suspends on the streamed editor check.
+// the public doesn't see it. Suspends on the streamed contacts, which are
+// null for non-editors.
 function EditorSection({
-  canEdit,
   contacts,
   location,
 }: {
-  canEdit: Promise<boolean>;
   contacts: EditorContacts;
   location: Location;
 }) {
-  if (!use(canEdit)) return null;
+  if (use(contacts) === null) return null;
   return (
     <section style={styles.section} aria-labelledby="editor-heading">
       <h3 id="editor-heading" style={styles.sectionHeading}>
         Editors only
       </h3>
       <p style={styles.sectionNote}>Not shown to the public.</p>
-      <PhotoUpload
-        // Remount per location so a pending message doesn't carry over.
-        key={location.id}
-        locationId={location.id}
-        hasImage={location.image_url !== null}
-      />
       <Contacts contacts={contacts} locationId={location.id} />
     </section>
   );
@@ -147,7 +139,6 @@ function EditorSection({
 interface Props {
   location: Location | null;
   contacts: EditorContacts;
-  canEdit: Promise<boolean>;
   userPosition: UserPosition | null;
   onClose: () => void;
 }
@@ -155,7 +146,6 @@ interface Props {
 export default function LocationPanel({
   location,
   contacts,
-  canEdit,
   userPosition,
   onClose,
 }: Props) {
@@ -325,11 +315,7 @@ export default function LocationPanel({
           )}
 
           <Suspense fallback={null}>
-            <EditorSection
-              canEdit={canEdit}
-              contacts={contacts}
-              location={location}
-            />
+            <EditorSection contacts={contacts} location={location} />
           </Suspense>
         </div>
       </div>
