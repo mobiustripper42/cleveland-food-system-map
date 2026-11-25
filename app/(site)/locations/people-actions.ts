@@ -24,7 +24,10 @@ import { getSession } from '@/lib/session';
 export type PeopleActionState =
   | { status: 'idle' }
   | { status: 'done'; message: string }
-  | { status: 'error'; message: string };
+  /** `field` names the input at fault, so the form can mark it. */
+  | { status: 'error'; message: string; field?: PersonField };
+
+export type PersonField = 'email' | 'name' | 'phone';
 
 const NAME_MAX = 200;
 const NOT_ALLOWED: PeopleActionState = {
@@ -180,13 +183,14 @@ export async function addPerson(
   const rawEmail = field(formData, 'email').trim();
   const email = rawEmail ? normalizeEmail(rawEmail) : null;
   if (rawEmail && !email) {
-    return { status: 'error', message: 'Enter a valid email.' };
+    return { status: 'error', message: 'Enter a valid email.', field: 'email' };
   }
   const name = field(formData, 'name').trim() || null;
   if (name && name.length > NAME_MAX) {
     return {
       status: 'error',
       message: `Name is limited to ${NAME_MAX} characters.`,
+      field: 'name',
     };
   }
   const rawPhone = field(formData, 'phone').trim();
@@ -195,6 +199,7 @@ export async function addPerson(
     return {
       status: 'error',
       message: 'Enter a 10-digit phone number, e.g. (216) 555-1234.',
+      field: 'phone',
     };
   }
   const asContact = formData.get('contact') === 'on';
@@ -205,7 +210,11 @@ export async function addPerson(
   }
   if (asOwner && !who.editor) return NOT_ALLOWED;
   if (asOwner && !email) {
-    return { status: 'error', message: 'Can edit needs an email.' };
+    return {
+      status: 'error',
+      message: 'Can edit needs an email.',
+      field: 'email',
+    };
   }
   if (asContact && !email && !name && !phone) {
     return { status: 'error', message: 'Enter an email, name, or phone.' };
@@ -379,19 +388,24 @@ export async function updateContact(
     return {
       status: 'error',
       message: `Name is limited to ${NAME_MAX} characters.`,
+      field: 'name',
     };
   }
   const rawPhone = field(formData, 'phone').trim();
   const phone = rawPhone ? normalizePhone(rawPhone) : null;
   if (rawPhone && !phone) {
-    return { status: 'error', message: 'Enter a 10-digit phone number.' };
+    return {
+      status: 'error',
+      message: 'Enter a 10-digit phone number, e.g. (216) 555-1234.',
+      field: 'phone',
+    };
   }
   // Sent only for unclaimed contacts; blank clears it.
   const setsEmail = formData.has('email');
   const rawEmail = field(formData, 'email').trim();
   const email = rawEmail ? normalizeEmail(rawEmail) : null;
   if (rawEmail && !email) {
-    return { status: 'error', message: 'Enter a valid email.' };
+    return { status: 'error', message: 'Enter a valid email.', field: 'email' };
   }
 
   try {

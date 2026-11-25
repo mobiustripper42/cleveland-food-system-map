@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import CategoryFilter from '@/components/map/category-filter';
 import SearchBar from '@/components/map/search-bar';
 import LocationPanel from '@/components/map/location-panel';
+import { useDebounced } from '@/hooks/use-debounced';
 import useIsDesktop from '@/hooks/use-is-desktop';
+import { matchesQuery } from '@/lib/browse';
 import { CATEGORIES } from '@/lib/locations';
 import { distanceMiles, formatMiles, type UserPosition } from '@/lib/geo';
 import type {
@@ -18,7 +20,28 @@ import type {
 // Leaflet touches `window` at import time — client-only.
 const MapView = dynamic(() => import('@/components/map/map-view'), {
   ssr: false,
+  loading: () => (
+    <div
+      className="flex flex-1 items-center justify-center bg-muted text-sm text-muted-foreground"
+      role="status"
+    >
+      Loading map…
+    </div>
+  ),
 });
+
+/** `?location=<id>` → that id if it's on the map, else null. */
+function idFromUrl(locations: Location[]) {
+  const id = new URLSearchParams(window.location.search).get('location');
+  return id && locations.some((l) => l.id === id) ? id : null;
+}
+
+function urlWith(id: string | null) {
+  const url = new URL(window.location.href);
+  if (id) url.searchParams.set('location', id);
+  else url.searchParams.delete('location');
+  return url.pathname + url.search + url.hash;
+}
 
 export default function MapClient({
   locations,
@@ -32,35 +55,60 @@ export default function MapClient({
   const [activeCategories, setActiveCategories] =
     useState<Category[]>(CATEGORIES);
   const [query, setQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const debouncedQuery = useDebounced(query);
   // Store the id, not the object, so the panel shows fresh server data after
   // an edit (e.g. a new photo) revalidates `locations`.
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selectedLocation = locations.find((l) => l.id === selectedId) ?? null;
+  // Bumped when a selection comes from the URL (deep link, Back/Forward):
+  // the map zooms in to it instead of only panning.
+  const [focusRequest, setFocusRequest] = useState(0);
   const [userPosition, setUserPosition] = useState<UserPosition | null>(null);
   const isDesktop = useIsDesktop();
+  // Whether the current panel added its own history entry (so closing it
+  // goes Back rather than leaving a dead entry).
+  const pushed = useRef(false);
 
-  // Deep link from /locations/[id] ("View on map"). Read on the client so the
-  // home page stays cached instead of becoming request-dynamic.
+  // Deep link from /locations/[id] ("View on map") and Back/Forward. Read on
+  // the client so the home page stays cached instead of request-dynamic.
   useEffect(() => {
-    const id = new URLSearchParams(window.location.search).get('location');
-    if (id && locations.some((l) => l.id === id)) setSelectedId(id);
+    const fromUrl = () => {
+      const id = idFromUrl(locations);
+      pushed.current = false;
+      setSelectedId(id);
+      if (id) setFocusRequest((n) => n + 1);
+    };
+    fromUrl();
+    window.addEventListener('popstate', fromUrl);
+    return () => window.removeEventListener('popstate', fromUrl);
   }, [locations]);
 
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedQuery(query), 200);
-    return () => clearTimeout(t);
-  }, [query]);
+  const select = useCallback(
+    (id: string) => {
+      if (id === selectedId) return;
+      // Switching between locations replaces the entry: Back closes the
+      // panel instead of walking through every pin tapped.
+      if (selectedId) window.history.replaceState(null, '', urlWith(id));
+      else {
+        window.history.pushState(null, '', urlWith(id));
+        pushed.current = true;
+      }
+      setSelectedId(id);
+    },
+    [selectedId],
+  );
 
-  const filtered = debouncedQuery.trim()
-    ? locations.filter((l) => {
-        const q = debouncedQuery.toLowerCase();
-        return (
-          l.name.toLowerCase().includes(q) ||
-          (l.notes ?? '').toLowerCase().includes(q)
-        );
-      })
-    : locations;
+  const close = useCallback(() => {
+    setSelectedId(null);
+    if (pushed.current) {
+      pushed.current = false;
+      window.history.back();
+    } else {
+      window.history.replaceState(null, '', urlWith(null));
+    }
+  }, []);
+
+  const filtered = locations.filter((l) => matchesQuery(l, debouncedQuery));
 
   const counts: Record<Category, number> = {
     garden: filtered.filter((l) => l.category === 'garden').length,
@@ -82,14 +130,7 @@ export default function MapClient({
   }
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        flex: 1,
-        minHeight: 0,
-      }}
-    >
+    <div className="flex min-h-0 flex-1 flex-col">
       <SearchBar value={query} onChange={setQuery} />
       <CategoryFilter
         activeCategories={activeCategories}
@@ -99,26 +140,31 @@ export default function MapClient({
       {nearest && !isDesktop && (
         <button
           type="button"
-          style={styles.nearest}
-          onClick={() => setSelectedId(nearest.location.id)}
+          className="block min-h-11 w-full cursor-pointer truncate border-b border-border bg-muted px-3 text-left text-base text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+          onClick={() => select(nearest.location.id)}
         >
           Nearest: <strong>{nearest.location.name}</strong> ·{' '}
           {formatMiles(nearest.miles)}
         </button>
       )}
-      <div style={styles.mapArea}>
+      {/* Map area: the desktop panel is positioned inside it (left), the
+          map controls sit top-right. */}
+      <div className="relative flex min-h-0 flex-1">
         {/* Desktop: a strip above a wide map is easy to miss — float a card
-            over the map's top-right (zoom/locate controls sit top-left, the
-            location panel opens on the left). */}
+            over the map, under the zoom/locate controls (top-right). */}
         {nearest && isDesktop && (
           <button
             type="button"
-            style={styles.nearestCard}
-            onClick={() => setSelectedId(nearest.location.id)}
+            className="absolute bottom-6 right-3 z-[1000] flex max-w-[280px] cursor-pointer flex-col gap-0.5 rounded-md border-l-4 border-l-brand bg-background px-3.5 py-2.5 text-left shadow-[0_2px_12px_rgba(0,0,0,0.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            onClick={() => select(nearest.location.id)}
           >
-            <span style={styles.nearestLabel}>Nearest to you</span>
-            <span style={styles.nearestName}>{nearest.location.name}</span>
-            <span style={styles.nearestMeta}>
+            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Nearest to you
+            </span>
+            <span className="text-base font-semibold text-foreground">
+              {nearest.location.name}
+            </span>
+            <span className="text-sm text-muted-foreground">
               {formatMiles(nearest.miles)} · straight line
             </span>
           </button>
@@ -127,76 +173,19 @@ export default function MapClient({
           locations={filtered}
           activeCategories={activeCategories}
           selectedLocation={selectedLocation}
-          onSelectLocation={(l) => setSelectedId(l.id)}
+          focusRequest={focusRequest}
+          onSelectLocation={(l) => select(l.id)}
           userPosition={userPosition}
           onLocate={setUserPosition}
         />
+        <LocationPanel
+          location={selectedLocation}
+          contacts={contacts}
+          editAccess={editAccess}
+          userPosition={userPosition}
+          onClose={close}
+        />
       </div>
-      <LocationPanel
-        location={selectedLocation}
-        contacts={contacts}
-        editAccess={editAccess}
-        userPosition={userPosition}
-        onClose={() => setSelectedId(null)}
-      />
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  mapArea: {
-    position: 'relative',
-    display: 'flex',
-    flex: 1,
-    minHeight: 0,
-  },
-  nearestCard: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    zIndex: 1000, // above Leaflet panes, below the location panel (1200)
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 2,
-    maxWidth: 280,
-    padding: '10px 14px',
-    background: '#fff',
-    border: 'none',
-    borderLeft: '4px solid #3a7d44',
-    borderRadius: 6,
-    boxShadow: '0 2px 12px rgba(0,0,0,0.2)',
-    textAlign: 'left',
-    cursor: 'pointer',
-  },
-  nearestLabel: {
-    fontSize: 11,
-    fontWeight: 600,
-    letterSpacing: '0.5px',
-    textTransform: 'uppercase',
-    color: '#6b6375',
-  },
-  nearestName: {
-    fontSize: 16,
-    fontWeight: 600,
-    color: '#08060d',
-  },
-  nearestMeta: {
-    fontSize: 13,
-    color: '#6b6375',
-  },
-  nearest: {
-    display: 'block',
-    width: '100%',
-    padding: '8px 12px',
-    background: '#f4f4f5',
-    border: 'none',
-    borderBottom: '1px solid #e5e4e7',
-    textAlign: 'left',
-    fontSize: 14,
-    color: '#08060d',
-    cursor: 'pointer',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-  },
-};

@@ -1,7 +1,23 @@
 import type { ReactNode } from 'react';
+import { CategoryIcon } from '@/components/locations/category-icon';
 import { directionsUrl, formatSchedule } from '@/lib/format';
-import { CATEGORY_COLORS, CATEGORY_LABELS } from '@/lib/locations';
+import {
+  CATEGORY_COLORS,
+  CATEGORY_LABELS,
+  CATEGORY_ON_COLORS,
+} from '@/lib/locations';
 import type { Location } from '@/lib/types';
+import { cn } from '@/lib/utils';
+
+/**
+ * Shared with the panel's own extras (distance, contacts, edit link).
+ * 16px on mobile (readable, no iOS zoom), 14px from md up.
+ */
+export const detailClasses = {
+  field: 'my-1 text-base leading-normal text-muted-foreground md:text-sm',
+  /** A standalone link on its own line: 44px tall on touch screens. */
+  link: 'link inline-flex min-h-11 items-center md:min-h-8',
+};
 
 /**
  * Public details for one location. No hooks — renders inside the map's
@@ -13,47 +29,56 @@ export default function LocationDetails({
   heading: Heading = 'h2',
   meta,
   children,
-  bodyStyle,
+  bodyClassName,
 }: {
   location: Location;
   heading?: 'h1' | 'h2';
   meta?: ReactNode;
   children?: ReactNode;
-  bodyStyle?: React.CSSProperties;
+  bodyClassName?: string;
 }) {
   const directions = directionsUrl(location);
 
   return (
     <>
       {location.image_url && (
+        // Decorative here: the name heading follows. Fixed aspect box so
+        // the text doesn't jump when the image loads.
         <img
           src={location.image_url}
-          alt={location.name}
-          style={styles.image}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className="block aspect-[16/9] max-h-[200px] w-full bg-muted object-cover"
         />
       )}
 
-      <div style={{ ...styles.body, ...bodyStyle }}>
+      <div className={cn('px-4 pb-5 pt-3.5', bodyClassName)}>
         <span
+          className="mb-2 inline-flex items-center gap-1.5 rounded px-2 py-1 text-xs font-semibold uppercase tracking-wide"
           style={{
-            ...styles.tag,
             backgroundColor: CATEGORY_COLORS[location.category],
+            color: CATEGORY_ON_COLORS[location.category],
           }}
         >
+          <CategoryIcon category={location.category} className="size-3.5" />
           {CATEGORY_LABELS[location.category]}
         </span>
 
-        <Heading style={styles.name}>{location.name}</Heading>
+        {/* pr-12: clear of the panel's close button. */}
+        <Heading className="mb-2 pr-12 text-lg font-semibold leading-snug text-foreground">
+          {location.name}
+        </Heading>
 
         {meta}
 
         {directions && (
-          <p style={styles.field}>
+          <p className={detailClasses.field}>
             <a
               href={directions}
               target="_blank"
               rel="noopener noreferrer"
-              style={detailStyles.link}
+              className={detailClasses.link}
             >
               {location.address ?? 'Get directions'}
             </a>
@@ -61,12 +86,12 @@ export default function LocationDetails({
         )}
 
         {location.website && (
-          <p style={styles.field}>
+          <p className={detailClasses.field}>
             <a
               href={location.website}
               target="_blank"
               rel="noopener noreferrer"
-              style={detailStyles.link}
+              className={detailClasses.link}
             >
               Website
             </a>
@@ -74,9 +99,9 @@ export default function LocationDetails({
         )}
 
         {location.schedules.length > 0 && (
-          <ul style={styles.hours} aria-label="Hours">
+          <ul className="mt-3 list-none p-0" aria-label="Hours">
             {location.schedules.map((s) => (
-              <li key={s.id} style={styles.field}>
+              <li key={s.id} className={detailClasses.field}>
                 {formatSchedule(s)}
               </li>
             ))}
@@ -84,7 +109,12 @@ export default function LocationDetails({
         )}
 
         {location.notes && (
-          <p style={{ ...styles.field, marginTop: 12, whiteSpace: 'pre-line' }}>
+          <p
+            className={cn(
+              detailClasses.field,
+              'mt-3 whitespace-pre-line [overflow-wrap:anywhere]',
+            )}
+          >
             {location.notes}
           </p>
         )}
@@ -94,56 +124,3 @@ export default function LocationDetails({
     </>
   );
 }
-
-/** Shared with the panel's own extras (distance, contacts). */
-export const detailStyles = {
-  field: {
-    margin: '4px 0',
-    fontSize: 14,
-    color: '#6b6375',
-    lineHeight: 1.5,
-  },
-  // Tailwind preflight strips link color + underline; restore both.
-  // #1d4ed8 on white is ~6.7:1, passes WCAG AA for body text.
-  link: {
-    color: '#1d4ed8',
-    textDecoration: 'underline',
-    textUnderlineOffset: 2,
-  },
-} satisfies Record<string, React.CSSProperties>;
-
-const styles: Record<string, React.CSSProperties> = {
-  image: {
-    width: '100%',
-    maxHeight: 180,
-    objectFit: 'cover',
-    display: 'block',
-  },
-  body: {
-    padding: '14px 16px 20px',
-  },
-  tag: {
-    display: 'inline-block',
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: 600,
-    letterSpacing: '0.5px',
-    textTransform: 'uppercase',
-    padding: '3px 8px',
-    borderRadius: 4,
-    marginBottom: 8,
-  },
-  name: {
-    margin: '0 0 8px',
-    fontSize: 18,
-    fontWeight: 600,
-    color: '#08060d',
-    paddingRight: 24,
-  },
-  field: detailStyles.field,
-  hours: {
-    listStyle: 'none',
-    margin: '12px 0 0',
-    padding: 0,
-  },
-};

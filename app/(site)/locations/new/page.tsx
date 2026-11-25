@@ -13,8 +13,7 @@ export default function NewLocationPage() {
       <div>
         <Link
           href="/locations"
-          className="text-sm underline underline-offset-4"
-          style={{ color: '#1d4ed8' }}
+          className="link inline-flex min-h-11 items-center"
         >
           ← All locations
         </Link>

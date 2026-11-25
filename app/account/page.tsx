@@ -13,11 +13,7 @@ export default function AccountPage() {
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-6 p-4 md:p-10">
       <div>
-        <Link
-          href="/"
-          className="text-sm underline underline-offset-4"
-          style={{ color: '#1d4ed8' }}
-        >
+        <Link href="/" className="link inline-flex min-h-11 items-center">
           ← Back to the map
         </Link>
       </div>
@@ -53,12 +49,26 @@ async function AccountDetails() {
       <p className="text-sm">
         Signed in as <strong>{session.user.email}</strong>
       </p>
-      {session.user.emailVerified && (
+      {session.user.emailVerified ? (
         <ProfileForm
           email={session.user.email}
           name={contact?.name ?? null}
           phone={contact?.phone ?? null}
         />
+      ) : (
+        <section
+          aria-labelledby="profile-heading"
+          className="flex flex-col gap-1"
+        >
+          <h2 id="profile-heading" className="text-lg font-semibold">
+            Contact info
+          </h2>
+          <p className="text-sm">
+            Verify your email to add a name and phone: sign out, then sign in
+            with an emailed code. We only link contact details to proven
+            addresses.
+          </p>
+        </section>
       )}
       <Passkeys
         passkeys={passkeys.map((p) => ({

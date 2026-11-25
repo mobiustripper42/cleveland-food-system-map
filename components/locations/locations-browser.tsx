@@ -1,16 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useDebounced } from '@/hooks/use-debounced';
 import CategoryFilter from '@/components/map/category-filter';
 import SearchBar from '@/components/map/search-bar';
 import {
   browseQuery,
   DEFAULT_STATUSES,
-  matchesName,
+  matchesQuery,
   type BrowseState,
   type BrowseView,
 } from '@/lib/browse';
-import { STATUSES, type LocationStatus } from '@/lib/locations';
+import { CATEGORIES, STATUSES, type LocationStatus } from '@/lib/locations';
 import type { Category, EditAccess, Location } from '@/lib/types';
 import { LocationRow, LocationTile } from './location-tile';
 
@@ -20,12 +21,15 @@ const STATUS_FILTER_LABELS: Record<LocationStatus, string> = {
   archived: 'Archived',
 };
 
-const TOGGLE_GROUP =
-  'inline-flex rounded-md border border-neutral-300 text-sm overflow-hidden';
+// No overflow-hidden on the group: it would clip the buttons' focus rings.
+// The end buttons round their own corners instead.
+const TOGGLE_GROUP = 'inline-flex rounded-md border border-input text-sm';
 const toggleClass = (on: boolean) =>
-  on
-    ? 'px-3 py-1 bg-neutral-900 text-white'
-    : 'px-3 py-1 bg-white text-neutral-800 hover:bg-neutral-100';
+  `inline-flex min-h-11 cursor-pointer items-center px-3 first:rounded-l-md last:rounded-r-md focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+    on
+      ? 'bg-foreground text-background'
+      : 'bg-background text-foreground hover:bg-muted'
+  }`;
 
 /**
  * Filters locally (~100 rows) and mirrors state into the URL with
@@ -49,17 +53,12 @@ export default function LocationsBrowser({
   const [categories, setCategories] = useState(initial.categories);
   const [statuses, setStatuses] = useState(initial.statuses);
   const [query, setQuery] = useState(initial.q);
-  const [debouncedQuery, setDebouncedQuery] = useState(initial.q);
+  const debouncedQuery = useDebounced(query);
   const [view, setView] = useState<BrowseView>(initial.view);
 
   // Nothing but published to show: ignore ?status= (and drop it from the URL).
   const canFilterStatus = managed.length > 0;
   const activeStatuses = canFilterStatus ? statuses : DEFAULT_STATUSES;
-
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedQuery(query), 200);
-    return () => clearTimeout(t);
-  }, [query]);
 
   useEffect(() => {
     const qs = browseQuery({
@@ -74,7 +73,7 @@ export default function LocationsBrowser({
   }, [categories, activeStatuses, debouncedQuery, view]);
 
   const byName = [...locations, ...managed].filter((l) =>
-    matchesName(l.name, debouncedQuery),
+    matchesQuery(l, debouncedQuery),
   );
   const statusCounts = { published: 0, draft: 0, archived: 0 } as Record<
     LocationStatus,
@@ -101,11 +100,7 @@ export default function LocationsBrowser({
 
   return (
     <div className="flex flex-col">
-      <SearchBar
-        value={query}
-        onChange={setQuery}
-        placeholder="Search by name…"
-      />
+      <SearchBar value={query} onChange={setQuery} />
       <CategoryFilter
         activeCategories={categories}
         counts={counts}
@@ -114,7 +109,10 @@ export default function LocationsBrowser({
 
       {canFilterStatus && (
         <div className="flex flex-wrap items-center gap-2 px-3 pt-2">
-          <span id="status-filter-label" className="text-sm text-neutral-600">
+          <span
+            id="status-filter-label"
+            className="text-sm text-muted-foreground"
+          >
             Status
           </span>
           <div
@@ -138,7 +136,7 @@ export default function LocationsBrowser({
       )}
 
       <div className="flex items-center justify-between gap-3 px-3 py-2">
-        <p className="text-sm text-neutral-600" aria-live="polite">
+        <p className="text-sm text-muted-foreground" aria-live="polite">
           {shown.length} {shown.length === 1 ? 'location' : 'locations'}
         </p>
         <div role="group" aria-label="Layout" className={TOGGLE_GROUP}>
@@ -157,9 +155,21 @@ export default function LocationsBrowser({
       </div>
 
       {shown.length === 0 ? (
-        <p className="px-3 py-8 text-center text-neutral-600">
-          No locations match.
-        </p>
+        <div className="flex flex-col items-center gap-3 px-3 py-8 text-center text-muted-foreground">
+          <p>No locations match.</p>
+          {(query || categories.length < CATEGORIES.length) && (
+            <button
+              type="button"
+              onClick={() => {
+                setQuery('');
+                setCategories(CATEGORIES);
+              }}
+              className="link inline-flex min-h-11 cursor-pointer items-center"
+            >
+              Clear search and filters
+            </button>
+          )}
+        </div>
       ) : view === 'tiles' ? (
         <ul className="grid grid-cols-1 gap-3 px-3 pb-6 sm:grid-cols-2 lg:grid-cols-3">
           {shown.map((l) => (
@@ -167,7 +177,7 @@ export default function LocationsBrowser({
           ))}
         </ul>
       ) : (
-        <ul className="divide-y divide-neutral-200 px-3 pb-6">
+        <ul className="divide-y divide-border px-3 pb-6">
           {shown.map((l) => (
             <LocationRow key={l.id} location={l} editAccess={editAccess} />
           ))}

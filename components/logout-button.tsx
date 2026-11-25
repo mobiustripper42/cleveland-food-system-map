@@ -13,5 +13,10 @@ export function LogoutButton() {
     router.refresh(); // drop editor-only data rendered for the old session
   };
 
-  return <Button onClick={logout}>Logout</Button>;
+  // Outline: same weight as "Sign in"; signing out isn't the page's main action.
+  return (
+    <Button variant="outline" onClick={logout}>
+      Log out
+    </Button>
+  );
 }

@@ -20,8 +20,8 @@ function Inner({
   return (
     <Link
       href={`/locations/${id}/edit`}
-      className={className}
-      style={{ color: '#1d4ed8', textDecoration: 'underline', ...style }}
+      className={className ? `link ${className}` : 'link'}
+      style={style}
     >
       Edit
     </Link>

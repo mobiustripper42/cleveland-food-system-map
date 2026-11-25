@@ -1,4 +1,9 @@
-import { CATEGORIES, CATEGORY_COLORS as ACCENT } from '@/lib/locations';
+import { CategoryIcon } from '@/components/locations/category-icon';
+import {
+  CATEGORIES,
+  CATEGORY_COLORS as ACCENT,
+  CATEGORY_ON_COLORS,
+} from '@/lib/locations';
 import type { Category } from '@/lib/types';
 
 const LABELS: Record<Category, string> = {
@@ -13,6 +18,11 @@ interface Props {
   onChange: (categories: Category[]) => void;
 }
 
+/**
+ * Category toggles, doubling as the map legend: each pill shows the same
+ * glyph as its pins. On = filled, off = outline (fill, not hue, carries the
+ * state). Wraps instead of scrolling sideways.
+ */
 export default function CategoryFilter({
   activeCategories,
   counts,
@@ -29,63 +39,40 @@ export default function CategoryFilter({
   }
 
   return (
-    <div style={styles.strip}>
+    <div
+      role="group"
+      aria-label="Show categories"
+      className="flex flex-wrap gap-2 border-b border-border bg-background px-3 py-2"
+    >
       {CATEGORIES.map((cat) => {
         const active = activeCategories.includes(cat);
         const isLast = active && activeCategories.length === 1;
         return (
           <button
             key={cat}
+            type="button"
             onClick={() => toggle(cat)}
             aria-disabled={isLast}
             aria-pressed={active}
+            title={isLast ? 'At least one category stays on' : undefined}
+            className={`inline-flex min-h-11 shrink-0 touch-manipulation items-center gap-1.5 whitespace-nowrap rounded-full border-2 px-3.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 motion-reduce:transition-none ${
+              isLast ? 'cursor-default' : 'cursor-pointer'
+            }`}
             style={{
-              ...styles.btn,
               borderColor: ACCENT[cat],
               backgroundColor: active ? ACCENT[cat] : 'transparent',
-              color: active ? '#fff' : ACCENT[cat],
-              cursor: isLast ? 'default' : 'pointer',
-              opacity: isLast ? 0.85 : 1,
+              // Off: dark text (amber text on white is under 4.5:1).
+              color: active ? CATEGORY_ON_COLORS[cat] : undefined,
             }}
           >
-            {LABELS[cat]} <span style={styles.count}>{counts[cat]}</span>
+            <CategoryIcon category={cat} className="size-4" />
+            {LABELS[cat]}
+            <span className="text-xs font-semibold tabular-nums">
+              {counts[cat]}
+            </span>
           </button>
         );
       })}
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  strip: {
-    display: 'flex',
-    flexWrap: 'nowrap',
-    overflowX: 'auto',
-    gap: '8px',
-    padding: '10px 12px',
-    backgroundColor: '#fff',
-    borderBottom: '1px solid #e5e4e7',
-    // hide scrollbar on mobile while keeping scrollability
-    msOverflowStyle: 'none',
-    scrollbarWidth: 'none',
-  },
-  btn: {
-    flexShrink: 0,
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '6px',
-    padding: '6px 14px',
-    border: '2px solid',
-    borderRadius: '20px',
-    fontSize: '14px',
-    fontWeight: 500,
-    lineHeight: 1,
-    transition: 'background-color 0.15s, color 0.15s',
-    whiteSpace: 'nowrap',
-  },
-  count: {
-    fontSize: '12px',
-    fontWeight: 600,
-    opacity: 0.9,
-  },
-};

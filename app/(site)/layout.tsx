@@ -1,9 +1,6 @@
-import { AuthButton } from '@/components/auth-button';
-import { NavLinks } from '@/components/nav-links';
+import { SiteHeader } from '@/components/site-header';
 import { SiteSection } from '@/components/site-section';
 import { getSiteSections } from '@/lib/db/queries';
-import Link from 'next/link';
-import { Suspense } from 'react';
 
 // Top / content / footer. Section HTML comes from site_sections (editors
 // change it at /admin/sections); empty sections render nothing.
@@ -16,19 +13,15 @@ export default async function SiteLayout({
 
   return (
     <div className="min-h-dvh flex flex-col">
-      <nav className="shrink-0 w-full flex justify-center border-b border-b-foreground/10 h-14">
-        <div className="w-full flex justify-between items-center gap-3 px-4 text-sm">
-          <Link href={'/'} className="font-semibold truncate min-w-0">
-            Cleveland Food System Map
-          </Link>
-          <NavLinks />
-          <Suspense>
-            <AuthButton />
-          </Suspense>
-        </div>
-      </nav>
+      <SiteHeader />
       <SiteSection html={sections.top} label="Introduction" />
-      <main className="flex flex-col">{children}</main>
+      <main
+        id="main"
+        tabIndex={-1}
+        className="flex flex-col focus:outline-none"
+      >
+        {children}
+      </main>
       <SiteSection
         html={sections.footer}
         label="Site footer"

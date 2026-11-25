@@ -1,9 +1,11 @@
 'use client';
 
-import { useActionState } from 'react';
+import { startTransition, useActionState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
+import { FieldError, FormStatus } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { focusFirstInvalid } from '@/hooks/use-unsaved-changes-guard';
 import { formatPhone } from '@/lib/format';
 import { type ProfileState, saveProfile } from './actions';
 
@@ -19,8 +21,20 @@ export function ProfileForm({
   phone: string | null;
 }) {
   const [state, formAction, pending] = useActionState(saveProfile, idle);
+  const formRef = useRef<HTMLFormElement>(null);
   const fieldError = (f: 'name' | 'phone') =>
     state.status === 'error' && state.field === f ? state.message : null;
+  useEffect(() => {
+    if (state.status === 'error') focusFirstInvalid(formRef.current);
+  }, [state]);
+
+  // Submit manually: a plain `action={…}` resets the form after every
+  // submit, which would wipe what was typed on a validation error.
+  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    startTransition(() => formAction(formData));
+  }
 
   return (
     <section aria-labelledby="profile-heading" className="flex flex-col gap-3">
@@ -34,11 +48,19 @@ export function ProfileForm({
         </p>
       </div>
 
-      <form action={formAction} className="flex flex-col gap-3">
+      <form ref={formRef} onSubmit={onSubmit} className="flex flex-col gap-3">
         <div className="flex flex-col gap-1">
           <Label htmlFor="profile-email">Email</Label>
-          <Input id="profile-email" value={email} readOnly disabled />
-          <p className="text-xs text-muted-foreground">Your sign-in email.</p>
+          <Input
+            id="profile-email"
+            value={email}
+            readOnly
+            disabled
+            aria-describedby="profile-email-note"
+          />
+          <p id="profile-email-note" className="text-sm text-muted-foreground">
+            Your sign-in email.
+          </p>
         </div>
 
         <div className="flex flex-col gap-1">
@@ -54,11 +76,7 @@ export function ProfileForm({
               fieldError('name') ? 'profile-name-error' : undefined
             }
           />
-          {fieldError('name') && (
-            <p id="profile-name-error" className="text-sm">
-              {fieldError('name')}
-            </p>
-          )}
+          <FieldError id="profile-name-error">{fieldError('name')}</FieldError>
         </div>
 
         <div className="flex flex-col gap-1">
@@ -75,21 +93,19 @@ export function ProfileForm({
               fieldError('phone') ? 'profile-phone-error' : undefined
             }
           />
-          {fieldError('phone') && (
-            <p id="profile-phone-error" className="text-sm">
-              {fieldError('phone')}
-            </p>
-          )}
+          <FieldError id="profile-phone-error">
+            {fieldError('phone')}
+          </FieldError>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Button type="submit" disabled={pending}>
             {pending ? 'Saving…' : 'Save'}
           </Button>
-          <p role="status" className="text-sm">
+          <FormStatus tone={state.status === 'saved' ? 'success' : 'error'}>
             {state.status === 'saved' && state.message}
             {state.status === 'error' && !state.field && state.message}
-          </p>
+          </FormStatus>
         </div>
       </form>
     </section>
