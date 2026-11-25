@@ -1,10 +1,8 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { Suspense } from 'react';
-import {
-  LocationEditForm,
-  LocationOwners,
-} from '@/components/locations/location-edit-form';
+import { LocationEditForm } from '@/components/locations/location-edit-form';
+import { LocationPeople } from '@/components/locations/location-people';
 import { ProfileImageField } from '@/components/locations/profile-image-field';
 import { getLocationForEdit } from '@/lib/db/queries';
 import { getSession } from '@/lib/session';
@@ -40,7 +38,7 @@ async function Gate({ params }: { params: Params }) {
   if (!(await getSession())) redirect('/login');
   const data = await getLocationForEdit(id);
   if (!data) notFound();
-  const { location, image, editor, owners } = data;
+  const { location, image, editor, people } = data;
 
   return (
     <>
@@ -52,12 +50,12 @@ async function Gate({ params }: { params: Params }) {
       />
       <hr className="border-foreground/10" />
       <LocationEditForm location={location} editor={editor} />
-      {owners && (
-        <>
-          <hr className="border-foreground/10" />
-          <LocationOwners locationId={location.id} owners={owners} />
-        </>
-      )}
+      <hr className="border-foreground/10" />
+      <LocationPeople
+        locationId={location.id}
+        people={people}
+        editor={editor}
+      />
     </>
   );
 }

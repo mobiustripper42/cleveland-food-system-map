@@ -1,0 +1,1 @@
+CREATE POLICY "contacts_insert_owner" ON "contacts" AS PERMISSIVE FOR INSERT TO "app_user" WITH CHECK ("contacts"."user_id" is null and exists (select 1 from public.location_owners o where o.user_id = (select public.current_user_id())));

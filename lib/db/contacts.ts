@@ -98,3 +98,25 @@ export async function linkContactsToVerifiedUsers(db: Db): Promise<number> {
     returning c.id`);
   return rows.length;
 }
+
+/**
+ * The user's contact id — linking the unclaimed contact with their email, or
+ * creating one, first. Owner-role db only (sets user_id); callers vouch for
+ * the user (their own verified session, or an editor acting on them).
+ */
+export async function ensureUserContact(
+  db: Db & Pick<PostgresJsDatabase, 'insert' | 'select'>,
+  u: { id: string; email: string; emailVerified: boolean },
+): Promise<string | null> {
+  await reconcileUserContact(db, u);
+  if (!u.emailVerified || !u.email) return null;
+  await db
+    .insert(contacts)
+    .values({ email: u.email.trim().toLowerCase(), user_id: u.id })
+    .onConflictDoNothing();
+  const [row] = await db
+    .select({ id: contacts.id })
+    .from(contacts)
+    .where(eq(contacts.user_id, u.id));
+  return row?.id ?? null;
+}

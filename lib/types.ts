@@ -25,4 +25,4 @@ export type EditAccess = ReturnType<typeof getEditAccess>;
 export type EditableLocation = NonNullable<
   Awaited<ReturnType<typeof getLocationForEdit>>
 >;
-export type LocationOwner = NonNullable<EditableLocation['owners']>[number];
+export type LocationPerson = EditableLocation['people'][number];

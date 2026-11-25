@@ -1,13 +1,12 @@
 'use server';
 
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { refresh, updateTag } from 'next/cache';
 import { type AddressParts, STATE_PATTERN, ZIP_PATTERN } from '@/lib/address';
-import { asUser, db } from '@/lib/db';
+import { asUser } from '@/lib/db';
 import { pgCode } from '@/lib/db/errors';
 import { canEditLocation, isEditor, LOCATIONS_TAG } from '@/lib/db/queries';
-import { locationOwners, locations } from '@/lib/db/schema';
-import { findOrCreateUserByEmail, normalizeEmail } from '@/lib/db/users';
+import { locations } from '@/lib/db/schema';
 import { geocodeAddress, outsideCleveland } from '@/lib/geocode';
 import {
   LOCATION_LIMITS,
@@ -222,83 +221,4 @@ export async function updateLocation(
   updateTag(LOCATIONS_TAG);
   refresh();
   return { status: 'saved', name: values.name, geocoded };
-}
-
-export type OwnerActionState =
-  | { status: 'idle' }
-  | { status: 'done'; message: string }
-  | { status: 'error'; message: string };
-
-/** Editors only; bind the location id. Creates a verified user if missing. */
-export async function addOwner(
-  locationId: string,
-  _prev: OwnerActionState,
-  formData: FormData,
-): Promise<OwnerActionState> {
-  const session = await getSession();
-  if (!session) return { status: 'error', message: 'Sign in again.' };
-  // Checked before touching `user`, which only the owner role can write.
-  // The insert below is enforced again by RLS.
-  if (!(await isEditor())) return { status: 'error', message: 'Not allowed.' };
-
-  const email = normalizeEmail(formData.get('email'));
-  if (!email) return { status: 'error', message: 'Enter a valid email.' };
-
-  const [location] = await db
-    .select({ id: locations.id })
-    .from(locations)
-    .where(eq(locations.id, locationId));
-  if (!location) return { status: 'error', message: 'Location not found.' };
-
-  const { id, created } = await findOrCreateUserByEmail(db, email);
-  const added = await asUser(session.user.id, (tx) =>
-    tx
-      .insert(locationOwners)
-      .values({ location_id: locationId, user_id: id })
-      .onConflictDoNothing()
-      .returning({ user_id: locationOwners.user_id }),
-  );
-
-  refresh();
-  if (!added.length) {
-    return { status: 'done', message: `${email} is already an owner.` };
-  }
-  return {
-    status: 'done',
-    message: created
-      ? `Added ${email}. They can sign in with an emailed code.`
-      : `Added ${email}.`,
-  };
-}
-
-/** Editors only (enforced by RLS); bind the location id. */
-export async function removeOwner(
-  locationId: string,
-  _prev: OwnerActionState,
-  formData: FormData,
-): Promise<OwnerActionState> {
-  const session = await getSession();
-  if (!session) return { status: 'error', message: 'Sign in again.' };
-
-  const userId = formData.get('user_id');
-  if (typeof userId !== 'string' || !userId) {
-    return { status: 'error', message: 'Invalid owner.' };
-  }
-
-  // Non-editors match zero rows (owners can see their own row, not delete it).
-  const removed = await asUser(session.user.id, (tx) =>
-    tx
-      .delete(locationOwners)
-      .where(
-        and(
-          eq(locationOwners.location_id, locationId),
-          eq(locationOwners.user_id, userId),
-        ),
-      )
-      .returning({ user_id: locationOwners.user_id }),
-  );
-  if (!removed.length) return { status: 'error', message: 'Not allowed.' };
-
-  refresh();
-  return { status: 'done', message: 'Removed.' };
 }
